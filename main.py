@@ -20,9 +20,8 @@ for i in ir:
 	instructions.append(asm.threeAddCode(i))
 
 desc.initialise()
-
 blocks=bb.createblocks(instructions)
-
+createsymboltable()
 print ".data"
 for symbol in symbollist:
 	if(symbol in functions or symbol in labels):

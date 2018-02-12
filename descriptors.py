@@ -62,7 +62,7 @@ def getreg(instruction,insnumber,nextinfotable,var):
 			ydash=''
 		#y is in register and no next use
 		if(ydash and nextinfotable[insnumber][y][1]==infinity):
-			spill(ydash,y)s
+			spill(ydash,y)
 			return ydash
 		#return empty register
 		elif(findempty()):

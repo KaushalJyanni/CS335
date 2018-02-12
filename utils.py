@@ -2,6 +2,7 @@ registers = ['eax','ebx','ecx','edx']
 addrdesc={}
 regdesc={}
 symbollist=[]
+symboltable={}
 functions=[]
 labels=[]
 flag=0
@@ -11,6 +12,15 @@ def check_int(a):
 		return 1
 	except:
 		return 0
+
+def createsymboltable():
+	for symbol in symbollist:
+		if(symbol in functions):
+			symboltable[symbol]={"type":"function","argslist":None}
+		elif(symbol in labels):
+			symboltable[symbol]={"type":"label","argslist":None}
+		else:
+			symboltable[symbol]={"type":"int","argslist":None}
 
 def writeback():
 	for reg in registers:
