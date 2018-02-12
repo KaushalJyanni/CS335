@@ -6,13 +6,15 @@ name={
 	'-':"subl",
 	'*':"imul",
 	'/':"divl",
+	'%':"mod",#thorough div
 	'+=':"addl",
 	'-=':"subl",
 	'*=':"imul",
 	'/=':"divl",
+	'%=':"mod",#thorugh div
 	'<<':"shl",
 	'>>':"shr",
-	'&':"and",
+	'&':"andl",
 	'|':"orl",
 	'^':"xorl",
 	'<<=':"shl",
@@ -51,7 +53,7 @@ def gencode(i,instruction,nextinfotable):
 	
 	elif(instruction.instype=='arithmetic' or instruction.instype== 'logical'):
 		#for divide
-		if(instruction.operation=="/" or instruction.operation=="/="):
+		if(instruction.operation=="/" or instruction.operation=="/=" or instruction.operation=="%" or instruction.operation=="%="):
 			#store values temporarily so do not update registers
 			tempeax=''
 			tempedx=''
@@ -91,10 +93,14 @@ def gencode(i,instruction,nextinfotable):
 					regsrc2=getreg(isntruction,i,nextinfotable,instruction.src2)
 					print "idivl\t%"+instruction.src2
 
-			if(addrdesc[instruction.target][0]):
-				print "movl\t%eax,\t%",addrdesc[instruction.target][0]
+			if(instruction.operation=="/" or instruction.operation=="/="):
+				reg="eax"
 			else:
-				print "movl\t%eax,\t",instruction.target
+				reg="edx"
+			if(addrdesc[instruction.target][0]):
+				print "movl\t%"+reg+",\t%",addrdesc[instruction.target][0]
+			else:
+				print "movl\t%"+reg+",\t",instruction.target
 
 			if(tempeax):
 				print "movl\t("+tempeax+"),\t%eax"

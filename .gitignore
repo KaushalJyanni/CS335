@@ -4,3 +4,4 @@
 *.s
 *.gitignore
 *_bak.py
+*.ir

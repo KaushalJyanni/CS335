@@ -1,0 +1,5 @@
+1, =, a, 2
+2, =, b, 7
+3, +, a, a, b
+4, ifgoto, leq, a, 8, 2
+5, retvoid
