@@ -22,7 +22,7 @@ def findempty():
 
 def spill(reg,var):
 	if(not addrdesc[var][1]):
-		print "movl\t%"+reg+",\t"+var #"\t\t from spill"
+		print "movl\t%"+reg+",\t"+var
 		addrdesc[var][1]=True
 	regdesc[reg]=''
 	addrdesc[var][0]=''
@@ -39,11 +39,10 @@ def farthest(instruction,insnumber,nextinfotable):
 	farthestvar=''
 	farthestreg=''
 	for reg,vari in regdesc.iteritems():
-		if(nextinfotable[insnumber][vari][1]==infinity):    ####will all variables value be present?
+		if(nextinfotable[insnumber][vari][1]==infinity):
 			spill(reg,vari)
 			return reg
-		#calcuate
-		else:												####shud u check if this reg is in src or target
+		else:
 			if(nextinfotable[insnumber][vari]>farthestuse):
 				farthestuse=nextinfotable[insnumber][vari]
 				farthestvar=vari
@@ -61,20 +60,14 @@ def getreg(instruction,insnumber,nextinfotable,var):
 			ydash=addrdesc[y][0]
 		else:
 			ydash=''
-		# print "ydash",ydash
 		#y is in register and no next use
 		if(ydash and nextinfotable[insnumber][y][1]==infinity):
-			# print "giving ",y,"'s register"
-			# print nextinfotable[insnumber][y]
-			spill(ydash,y)						######during spilling shud u removle regdesc[ydash]
-			# print "return ing y's register"
+			spill(ydash,y)s
 			return ydash
 		#return empty register
 		elif(findempty()):
 			return findempty()
-			# print "returning empty register"
 		else:
-			# print "father"
 			return farthest(instruction,insnumber,nextinfotable)
 	
 	elif(instruction.instype=="ifgoto"):
@@ -84,15 +77,14 @@ def getreg(instruction,insnumber,nextinfotable,var):
 				return addrdesc[y][0]
 			elif(findempty()):
 				reg=findempty()
-				print "movl\t("+y+"),\t%"+reg #### changed y from instruction.src1
+				print "movl\t("+y+"),\t%"+reg
 				addrdesc[y][0]=reg
 				addrdesc[y][1]=False
 				regdesc[reg]=y
 				return reg
-				# print "returning empty register"
 			else:
 				reg=farthest(instruction,insnumber,nextinfotable)
-				print "movl\t("+y+"),\t%"+reg #### changed y from instruction.src1
+				print "movl\t("+y+"),\t%"+reg
 				addrdesc[y][0]=reg
 				addrdesc[y][1]=False
 				regdesc[reg]=y
@@ -100,16 +92,15 @@ def getreg(instruction,insnumber,nextinfotable,var):
 		else:
 			if(findempty()):
 				reg=findempty()
-				print "movl\t$"+var+",\t%"+reg #### changed y from instruction.src1
+				print "movl\t$"+var+",\t%"+reg
 				# dont update descriptors coz jjust for temporary use
 				# addrdesc[y][0]=reg
 				# addrdesc[y][1]=False
 				# regdesc[reg]=y
 				return reg
-				# print "returning empty register"
 			else:
 				reg=farthest(instruction,insnumber,nextinfotable)
-				print "movl\t$"+var+",\t%"+reg #### changed y from instruction.src1
+				print "movl\t$"+var+",\t%"+reg
 				# dont update descriptors coz jjust for temporary use
 				# addrdesc[y][0]=reg
 				# addrdesc[y][1]=False
@@ -122,15 +113,14 @@ def getreg(instruction,insnumber,nextinfotable,var):
 			return addrdesc[y][0]
 		elif(findempty()):
 			reg=findempty()
-			print "movl\t("+y+"),\t%"+reg#### changed y from instruction.src1
+			print "movl\t("+y+"),\t%"+reg
 			addrdesc[y][0]=reg
 			addrdesc[y][1]=False
 			regdesc[reg]=y
 			return reg
-			# print "returning empty register"
 		else:
 			reg=farthest(instruction,insnumber,nextinfotable)
-			print "movl\t("+y+"),\t%"+reg######
+			print "movl\t("+y+"),\t%"+reg
 			addrdesc[y][0]=reg
 			addrdesc[y][1]=False
 			regdesc[reg]=y
@@ -141,12 +131,11 @@ def getreg(instruction,insnumber,nextinfotable,var):
 			return addrdesc[y][0]
 		elif(findempty()):
 			reg=findempty()
-			print "movl\t("+y+"),\t%"+reg #### changed y from instruction.src1
+			print "movl\t("+y+"),\t%"+reg
 			addrdesc[y][0]=reg
 			addrdesc[y][1]=False
 			regdesc[reg]=y
 			return reg
-			# print "returning empty register"
 		else:
 			print "father"
 			farthestuse=0
@@ -155,11 +144,11 @@ def getreg(instruction,insnumber,nextinfotable,var):
 			for reg,vari in regdesc.iteritems():
 				if(reg=="eax"):
 					continue
-				if(nextinfotable[insnumber][vari][1]==infinity):    ####will all variables value be present?
+				if(nextinfotable[insnumber][vari][1]==infinity):
 					spill(reg,vari)
 					return reg
 				#calcuate
-				else:												####shud u check if this reg is in src or target
+				else:
 					if(nextinfotable[insnumber][vari]>farthestuse):
 						farthestuse=nextinfotable[insnumber][vari]
 						farthestvar=vari

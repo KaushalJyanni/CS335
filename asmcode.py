@@ -42,7 +42,7 @@ class threeAddCode:
 			self.src2 = instruction[3]
 			self.target = instruction[2]
 
-		elif(instruction[1]== "ifgoto"):	#todo
+		elif(instruction[1]== "ifgoto"):
 			self.instype = "ifgoto"
 			self.operation = instruction[2]
 			self.src1 = instruction[3]
@@ -53,7 +53,7 @@ class threeAddCode:
 			self.instype = "goto"
 			self.target = instruction[2]
 
-		elif(instruction[1] == "callvoid"):		#todo
+		elif(instruction[1] == "callvoid"):
 			self.instype = "callvoid"
 			self.target = instruction[2]
 			functions.append(self.target)
@@ -76,10 +76,7 @@ class threeAddCode:
 			self.label = instruction[2]
 			labels.append(self.label)
 
-		# elif(instruction[1] == "return"):		#todo
-		# 	self.instype="return"
-		
-		elif(instruction[1] == "print"):	#todo
+		elif(instruction[1] == "print"):
 			self.instype = "print"
 			self.src1 = instruction[2]
 		
@@ -96,14 +93,8 @@ class threeAddCode:
 			symbollist.append(self.src1)
 		if(self.src2 and self.src2 not in symbollist and not check_int(self.src2)):
 			symbollist.append(self.src2)
-
-	# def __repr__(self):
-	# 	return ('instype=%s operation=%s src1=%s src2=%s target=%s label=%s' % (repr(self.instype), repr(self.operation), repr(self.src1), repr(self.src2), repr(self.target), self.label))
 	
 	def __repr__(self):
 		return ('%s %s %s %s %s %s' % (repr(self.instype), repr(self.operation), repr(self.src1), repr(self.src2), repr(self.target), self.label))
 		
-
-#callint retvoid ....
-#a=a+b next use of a
 

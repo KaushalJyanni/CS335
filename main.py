@@ -1,5 +1,4 @@
 #!/bin/python2
-# import utils
 from utils import *
 import sys
 import asmcode as asm
@@ -18,7 +17,6 @@ with open(file,'r') as f:
 for i in ir:
 	i=i.split(',')
 	i=[x.strip(' ') for x in i]
-	# print i
 	instructions.append(asm.threeAddCode(i))
 
 desc.initialise()
@@ -42,14 +40,14 @@ print
 print "main:"
 print "pushl\t%ebp"
 print "movl\t%esp,%ebp"
+j=0
 for block in blocks:
 	nextinfotable=ui.useinfo(block)
 	for i,ins in enumerate(block):
+		print "#"+ir[j]
 		ga.gencode(i,ins,nextinfotable)
-	# if(not flag):
-	# print "writeback of main"
+		j+=1
 	writeback()
-	# utils.flag=0
 
 writeexit()
 writeprint()

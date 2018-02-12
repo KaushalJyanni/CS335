@@ -1,4 +1,3 @@
-# registers = ['rax','rbx','rcx','rdx','rsi','rdi','rbp','rsp']
 registers = ['eax','ebx','ecx','edx']
 addrdesc={}
 regdesc={}
@@ -14,7 +13,6 @@ def check_int(a):
 		return 0
 
 def writeback():
-	# print "writng back"
 	for reg in registers:
 		if(regdesc[reg]):
 			var=regdesc[reg]
@@ -39,11 +37,4 @@ def writeprint():
 	with open ("printInteger.S") as f:
 		d=f.readlines()
 	for d1 in d:
-		# d1.strip("\n")
 		print d1.strip("\n")
-#doubts
-#writing label in x86
-#writing jmp instruction. more or less ame as above
-#shl operator
-#SRC DST OR DST SRC
-
