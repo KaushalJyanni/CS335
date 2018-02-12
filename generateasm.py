@@ -210,10 +210,24 @@ def gencode(i,instruction,nextinfotable):
 		print "leave"
 		print "ret"
 		print
-	elif(instruction.instype == 'print'):
-		writeback()
-		print "movl\t("+instruction.src1+"),\t%eax"
-		print "call print"
+	elif(instruction.instype == "print"):
+		# writeback()
+		if(addrdesc[instruction.src1][0]):
+			print "pushl\t%"+addrdesc[instruction.src1][0]
+		else:
+			print "pushl\t"+instruction.src1
+		print "pushl $outFormat"
+		print "call printf" 
+	
+	elif(instruction.instype == "scan"):
+		if(addrdesc[instruction.target][0]):
+			regdesc[addresdesc[instruction.target][0]]=''
+			addresdesc[instruction.target][0]=''
+			addresdesc[instruction.target][1]=True
+		print "pushl $",instruction.target
+		print "pushl $inFormat"
+		print "call scanf"
+
 	else:
 		print "unknown instruction"
 		exit()

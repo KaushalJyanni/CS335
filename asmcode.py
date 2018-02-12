@@ -82,6 +82,7 @@ class threeAddCode:
 		
 		elif(instruction[1] == "scan"):		#todo
 			self.instype = "scan"
+			self.target = instruction[2]
 
 		else:
 			print "unknown instruction type,",instruction[1], "aborting"

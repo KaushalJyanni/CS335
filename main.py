@@ -27,16 +27,17 @@ for symbol in symbollist:
 	if(symbol in functions or symbol in labels):
 		continue
 	print "\t"+symbol+":\t.int\t0" 
-print "\t"+"message"+":\t.ascii\t\"\\n\"" 
+print "\toutFormat:\t.asciz\t\"%d\\n\""
+print "\tinFormat:\t.ascii\t\"%d\""
 print
 print ".text"
-print ".global\t_start"
-print
-print "_start:"
-print "\tcall main"
-print "\tjmp exit"
+print ".global\tmain"
 print
 print "main:"
+print "\tcall realmain"
+print "\tjmp exit"
+print
+print "realmain:"
 print "pushl\t%ebp"
 print "movl\t%esp,%ebp"
 j=0
@@ -49,6 +50,6 @@ for block in blocks:
 	writeback()
 
 writeexit()
-writeprint()
+# writeprint()
 
 
