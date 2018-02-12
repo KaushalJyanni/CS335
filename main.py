@@ -27,9 +27,10 @@ blocks=bb.createblocks(instructions)
 
 print ".data"
 for symbol in symbollist:
-	if(symbol in functions):
+	if(symbol in functions or symbol in labels):
 		continue
 	print "\t"+symbol+":\t.int\t0" 
+print "\t"+"message"+":\t.ascii\t\"\\n\"" 
 print
 print ".text"
 print ".global\t_start"
@@ -51,5 +52,6 @@ for block in blocks:
 	# utils.flag=0
 
 writeexit()
+writeprint()
 
 

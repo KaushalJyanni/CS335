@@ -4,6 +4,7 @@ addrdesc={}
 regdesc={}
 symbollist=[]
 functions=[]
+labels=[]
 flag=0
 def check_int(a):
 	try:
@@ -30,6 +31,16 @@ def writeexit():
 	print "movl\t$1,\t%eax"
 	print "int\t$0x80"
 	print
+
+def writeprint():
+	print "print:"
+	print "pushl\t%ebp"
+	print "movl\t%esp,%ebp"
+	with open ("printInteger.S") as f:
+		d=f.readlines()
+	for d1 in d:
+		# d1.strip("\n")
+		print d1.strip("\n")
 #doubts
 #writing label in x86
 #writing jmp instruction. more or less ame as above

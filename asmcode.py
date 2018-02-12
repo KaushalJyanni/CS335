@@ -74,6 +74,7 @@ class threeAddCode:
 		elif(instruction[1] == "label"):
 			self.instype = "label"
 			self.label = instruction[2]
+			labels.append(self.label)
 
 		# elif(instruction[1] == "return"):		#todo
 		# 	self.instype="return"

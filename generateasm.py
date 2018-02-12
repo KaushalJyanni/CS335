@@ -3,7 +3,7 @@ from utils import *
 from descriptors import *
 
 name={
-	'+':"add",
+	'+':"addl",
 	'-':"sub",
 	'*':"mult",
 	'/':"div",	#check
@@ -23,7 +23,7 @@ name={
 	'&=':"and",
 	'|=':"or",
 	'^=':"xor",
-	'leq':"je",
+	'leq':"jle",
 	'lt':"jl",
 	'geq':"jge",
 	'gt':"jg",
@@ -38,7 +38,7 @@ def gencode(i,instruction,nextinfotable):
 			if(addrdesc[instruction.target][0]):
 				print str("movl\t$")+instruction.src1+str(",\t%")+addrdesc[instruction.target][0]
 			else:
-				print str("movl\t$")+instruction.src1+str(",\t(")+instruction.target+")"
+				print str("movl\t$")+instruction.src1+str(",\t")+instruction.target
 		else:
 			ydash=addrdesc[instruction.src1][0]
 			if(ydash):
@@ -97,13 +97,16 @@ def gencode(i,instruction,nextinfotable):
 			print name[instruction.operation]+str("\t%")+zdash+str(",\t%")+regt
 		##from mem
 		else:
-			print name[instruction.operation]+str("\t(")+instruction.src2+str("),\t%")+regt
+			if(not check_int(instruction.src2)):
+				print name[instruction.operation]+str(" \t(")+instruction.src2+str("),\t%")+regt
+			else:
+				print name[instruction.operation]+str(" \t$")+instruction.src2+str(",\t%")+regt
 		addrdesc[instruction.target][0]=regt
 		addrdesc[instruction.target][1]=False
 		regdesc[regt]=instruction.target
 	
 	elif(instruction.instype=='label'):
-		print instruction.label,":"
+		print instruction.label+":"
 		if(instruction.label in functions):
 			print "pushl\t%ebp"
 			print "movl\t%esp,%ebp"
@@ -130,12 +133,12 @@ def gencode(i,instruction,nextinfotable):
 				regsrc2=getreg(instruction,i,nextinfotable,instruction.src2)
 				regsrc1=addrdesc[instruction.src1][0]
 				if(regsrc1):
-					print str("cmp\t%")+regsrc1+str(",\t%")+regsrc2
+					print str("cmp \t%")+regsrc1+str(",\t%")+regsrc2
 				else:
-					print str("cmp\t(")+instruction.src1+str("),\t%")+regsrc2
+					print str("cmp \t(")+instruction.src1+str("),\t%")+regsrc2
 			else:
 				regsrc2=getreg(instruction,i,nextinfotable,instruction.src2)
-				print str("cmp\t$")+isntruction.src1+str("\t,%")+regsrc2
+				print str("cmp \t$")+isntruction.src1+str("\t,%")+regsrc2
 			print name[instruction.operation],"\t",instruction.target
 	elif(instruction.instype=='callvoid'):
 		writeback()
@@ -200,7 +203,11 @@ def gencode(i,instruction,nextinfotable):
 				regdesc["eax"]=valueof ##not any variable just an int
 		print "leave"
 		print "ret"
-		print 
+		print
+	elif(instruction.instype == 'print'):
+		writeback()
+		print "movl\t("+instruction.src1+"),\t%eax"
+		print "call print"
 	else:
 		print "unknown instruction"
 		exit()
