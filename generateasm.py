@@ -120,7 +120,7 @@ def gencode(i,instruction,nextinfotable):
 			exit()
 		else:
 			#check y addrdesc
-			if(not check_int(instruction.src1)):
+			if(not check_int(instruction.src2)):
 				# regsrc1=getreg(instruction,i,nextinfotable,instruction.src1)
 				# if(not check_int(instruction.src2)):
 				# 	if(addrdesc[instruction.src2][0]):
@@ -133,12 +133,15 @@ def gencode(i,instruction,nextinfotable):
 				regsrc2=getreg(instruction,i,nextinfotable,instruction.src2)
 				regsrc1=addrdesc[instruction.src1][0]
 				if(regsrc1):
-					print str("cmp \t%")+regsrc1+str(",\t%")+regsrc2
+					print str("cmp \t%")+regsrc2+str(",\t%")+regsrc1
 				else:
-					print str("cmp \t(")+instruction.src1+str("),\t%")+regsrc2
+					print str("cmp \t%")+instruction.src2+str(",\t(")+regsrc1+")"
 			else:
-				regsrc2=getreg(instruction,i,nextinfotable,instruction.src2)
-				print str("cmp \t$")+isntruction.src1+str("\t,%")+regsrc2
+				# regsrc1=getreg(instruction,i,nextinfotable,instruction.src1)
+				if(addrdesc[instruction.src1][0]):
+					print str("cmp \t$")+instruction.src2+str(",\t%")+adddrdesc[isntruction.src1][0]
+				else:
+					print str("cmp \t$")+instruction.src2+str(",\t(")+instruction.src1+")"
 			print name[instruction.operation],"\t",instruction.target
 	elif(instruction.instype=='callvoid'):
 		writeback()
