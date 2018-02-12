@@ -52,23 +52,38 @@ def farthest(instruction,insnumber,nextinfotable):
 
 def getreg(instruction,insnumber,nextinfotable,var):
 	#x=y op z
-	if(instruction.instype=="assignment"or instruction.instype=="arithmetic"or instruction.instype=="logical"):
-		x=instruction.target
-		y=instruction.src1
-		z=instruction.src2
-		if(not check_int(y)):
-			ydash=addrdesc[y][0]
+	if(instruction.operation=="/" or instruction.operation=="/="):
+		if(not regdesc["ebx"]):
+			return "ebx"
+		elif(not regdesc["ecx"]):
+			return "ecx"
+
+		vebx=regdesc["ebx"]
+		vecx=regdesc["ecx"]
+		if(nextinfotable[insnumber][vebx][1]>nextinfotable[insnumber][vecx][1]):
+			spill("ebx",vebx)
+			return "ebx" 
 		else:
-			ydash=''
-		#y is in register and no next use
-		if(ydash and nextinfotable[insnumber][y][1]==infinity):
-			spill(ydash,y)
-			return ydash
-		#return empty register
-		elif(findempty()):
-			return findempty()
-		else:
-			return farthest(instruction,insnumber,nextinfotable)
+			spill("ecx",vecx)
+			return "ecx"
+	
+	elif(instruction.instype=="assignment"or instruction.instype=="arithmetic"or instruction.instype=="logical"):
+			x=instruction.target
+			y=instruction.src1
+			z=instruction.src2
+			if(not check_int(y)):
+				ydash=addrdesc[y][0]
+			else:
+				ydash=''
+			#y is in register and no next use
+			if(ydash and nextinfotable[insnumber][y][1]==infinity):
+				spill(ydash,y)
+				return ydash
+			#return empty register
+			elif(findempty()):
+				return findempty()
+			else:
+				return farthest(instruction,insnumber,nextinfotable)
 	
 	elif(instruction.instype=="ifgoto"):
 		if(not check_int(var)):
@@ -137,7 +152,7 @@ def getreg(instruction,insnumber,nextinfotable,var):
 			regdesc[reg]=y
 			return reg
 		else:
-			print "father"
+			# print "father"
 			farthestuse=0
 			farthestvar=''
 			farthestreg=''

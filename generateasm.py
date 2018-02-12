@@ -4,11 +4,11 @@ from descriptors import *
 name={
 	'+':"addl",
 	'-':"subl",
-	'*':"multl",
+	'*':"imul",
 	'/':"divl",
 	'+=':"addl",
 	'-=':"subl",
-	'*=':"multl",
+	'*=':"imul",
 	'/=':"divl",
 	'<<':"shl",
 	'>>':"shr",
@@ -50,39 +50,91 @@ def gencode(i,instruction,nextinfotable):
 				regdesc[regt]=instruction.target
 	
 	elif(instruction.instype=='arithmetic' or instruction.instype== 'logical'):
-		#x=y op z
-		if(not addrdesc[instruction.target][0]):	#if x not already in reg
-			regt=getreg(instruction,i,nextinfotable,instruction.target)
-		else:
-			regt=addrdesc[instruction.target][0]
-		#check y addrdesc
-		if(not check_int(instruction.src1)):
-			ydash=addrdesc[instruction.src1][0]
-		else:
-			ydash=''
-		if(ydash and ydash != regt): ##if y already in reg
-			print str("movl\t%")+ydash+str(",\t%")+regt
-		elif(not ydash and ydash!=regt):
-			if(check_int(instruction.src1)):		##from a constant
-				print str("movl\t$")+instruction.src1+str(",\t%")+regt
+		#for divide
+		if(instruction.operation=="/" or instruction.operation=="/="):
+			#store values temporarily so do not update registers
+			tempeax=''
+			tempedx=''
+			if(regdesc["eax"]):
+				tempeax=regdesc["eax"]
+				print "movl\t%eax,\t"+tempeax
+			if(regdesc["edx"]):
+				tempedx=regdesc["edx"]
+				print "movl\t%edx,\t"+tempedx
+			print "movl\t$0,\t%edx"
+			#dividend=src1 #divisor =src2
+			if(not check_int(instruction.src1)):
+				#dividend
+				if(addrdesc[instruction.src1][0]):
+					print "movl\t%"+addrdesc[instruction.src1][0]+",\t%eax"
+				else:
+					print "movl\t("+instruction.src1+"),\t%eax"
+				#divisor
+				if(not check_int(instruction.src2)):
+					if(addrdesc[instruction.src2][0]):
+						print "idivl\t%",addrdesc[instruction.src2][0]
+					else:
+						print "idivl\t"+instruction.src2
+				else:
+					regsrc2=getreg(instruction,i,nextinfotable,instruction.src2)
+					# print "#myreg is ",regsrc2
+					print "movl\t$",instruction.src2,",\t%"+regsrc2
+					print "idivl\t%"+regsrc2
 			else:
-				print str("movl\t(")+instruction.src1+str("),\t%")+regt
-		if(not check_int(instruction.src2)):
-			zdash=addrdesc[instruction.src2][0]
+				print "movl\t$",isntruction.src1,",\t%eax"
+				if(not check_int(instruction.src2)):
+					if(addrdesc[instruction.src2][0]):
+						print "idivl\t%",addrdesc[instruction.src2][0]
+					else:
+						print "idivl\t"+instruction.src2
+				else:
+					regsrc2=getreg(isntruction,i,nextinfotable,instruction.src2)
+					print "idivl\t%"+instruction.src2
+
+			if(addrdesc[instruction.target][0]):
+				print "movl\t%eax,\t%",addrdesc[instruction.target][0]
+			else:
+				print "movl\t%eax,\t",instruction.target
+
+			if(tempeax):
+				print "movl\t("+tempeax+"),\t%eax"
+			if(tempedx):
+				print "movl\t("+tempedx+"),\t%edx"
+		
 		else:
-			zdash=''
-		##if reg
-		if(zdash):
-			print name[instruction.operation]+str("\t%")+zdash+str(",\t%")+regt
-		##from mem
-		else:
+			#x=y op z
+			if(not addrdesc[instruction.target][0]):	#if x not already in reg
+				regt=getreg(instruction,i,nextinfotable,instruction.target)
+			else:
+				regt=addrdesc[instruction.target][0]
+			#check y addrdesc
+			if(not check_int(instruction.src1)):
+				ydash=addrdesc[instruction.src1][0]
+			else:
+				ydash=''
+			if(ydash and ydash != regt): ##if y already in reg
+				print str("movl\t%")+ydash+str(",\t%")+regt
+			elif(not ydash and ydash!=regt):
+				if(check_int(instruction.src1)):		##from a constant
+					print str("movl\t$")+instruction.src1+str(",\t%")+regt
+				else:
+					print str("movl\t(")+instruction.src1+str("),\t%")+regt
 			if(not check_int(instruction.src2)):
-				print name[instruction.operation]+str(" \t(")+instruction.src2+str("),\t%")+regt
+				zdash=addrdesc[instruction.src2][0]
 			else:
-				print name[instruction.operation]+str(" \t$")+instruction.src2+str(",\t%")+regt
-		addrdesc[instruction.target][0]=regt
-		addrdesc[instruction.target][1]=False
-		regdesc[regt]=instruction.target
+				zdash=''
+			##if reg
+			if(zdash):
+				print name[instruction.operation]+str("\t%")+zdash+str(",\t%")+regt
+			##from mem
+			else:
+				if(not check_int(instruction.src2)):
+					print name[instruction.operation]+str(" \t(")+instruction.src2+str("),\t%")+regt
+				else:
+					print name[instruction.operation]+str(" \t$")+instruction.src2+str(",\t%")+regt
+			addrdesc[instruction.target][0]=regt
+			addrdesc[instruction.target][1]=False
+			regdesc[regt]=instruction.target
 	
 	elif(instruction.instype=='label'):
 		print instruction.label+":"
@@ -135,7 +187,7 @@ def gencode(i,instruction,nextinfotable):
 		if(addrdesc[instruction.src1][0]):
 			print "movl\t%eax"+",\t%"+addresdesc[instruction.src1][0]
 		else:
-			print "movl\t%eax"+",\t("+instruction.src1+")"
+			print "movl\t%eax"+",\t"+instruction.src1
 
 	elif(instruction.instype == 'retint'):
 		writeback()
