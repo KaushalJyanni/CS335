@@ -94,6 +94,7 @@ t_COLON = r':'
 t_DOUBLECOLON = r'::'
 t_DOLLAR = r'\$'
 t_BACKSLASH=r'\\'
+t_NEWLINE = r'[\n]+'
 
 def t_VARIABLE(t):
    r'[A-Za-z_][A-Za-z0-9_]*'
@@ -131,9 +132,11 @@ def t_IGNORED(t):
    r'[ \t]'
    pass
 
-def t_NEWLINE(t):
-    r'\n+'
-    t.lexer.lineno += len(t.value)
+# def t_NEWLINE(t):
+#     r'\n+'
+#     t.value = str(t.value)
+#     # t.lexer.lineno += len(t.value)
+#     return t
 
 
 
@@ -152,7 +155,7 @@ try:
 except IOError:
    print "unable to open file"
    sys.exit()
-
+# print "data = ",str(data)
 lexer.input(str(data))
 token = lexer.token() 
 results=dict()
