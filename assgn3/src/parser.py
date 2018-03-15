@@ -3,6 +3,20 @@ import sys
 from lexer import tokens
 filename = sys.argv[1]
 
+precedence = (
+    ('right','EQUAL', 'NOT'),
+    ('left', 'LOGICAL_OR'),
+    ('left', 'LOGICAL_AND'),
+    ('left', 'BINARY_OR'),
+    ('left', 'BINARY_XOR'),
+    ('left', 'BINARY_AND'),
+    ('left', 'EQUAL', 'NOT_EQUALS'),
+    ('left', 'LESS_THAN', 'GREATER_THAN','LESS_THAN_EQ','GREATER_THAN_EQ'),
+    ('left', 'BINARY_LSHIFT', 'BINARY_RSHIFT'),
+    ('left', 'PLUS', 'MINUS'),
+    ('left', 'MULTIPLY', 'DIVIDE','REMAINDER'),
+)
+
 def p_program(p):
 	'''program : compstmt'''
 	p[0]=["program"]
@@ -31,15 +45,14 @@ def p_compstmt(p):
 
 def p_stmts(p):
 	'''stmts : stmt
-			 | stmt terminals stmt'''
+			 | stmt terminals expr'''
 	p[0]=["stmts"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
 def p_stmt(p):
-	'''stmt : call do compstmt end
+	'''stmt : call DO compstmt END
 			| stmt IF expr
-			| stmt WHILE expr
 			| stmt UNLESS expr
 			| stmt UNTIL expr
 			| BEGIN LCBRACKET compstmt RBRACKET
@@ -112,9 +125,7 @@ def p_arg(p):
 		   | arg BINARY_RSHIFT arg
 		   | arg LOGICAL_AND arg
 		   | arg LOGICAL_OR arg
-		   | literal
-		   | VARIABLE
-		   | function'''
+		   | primary'''
 	p[0]=["arg"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -128,10 +139,10 @@ def p_primary(p):
 				 | function
 				 | IF expr then compstmt opt_elsifstmt opt_elsestmt END
 				 | UNLESS expr then compstmt opt_elsestmt END
-				 | WHILE expr do compstmt END
-				 | UNTIL expr do compstmt END
+				 | WHILE expr DO compstmt END
+				 | UNTIL expr DO compstmt END
 				 | CASE compstmt WHEN when_args then compstmt opt_when_args opt_elsestmt END
-				 | FOR block_var IN expr do compstmt END
+				 | FOR block_var IN expr DO compstmt END
 				 | BEGIN compstmt END
 				 | CLASS VARIABLE compstmt END
 				 | DEF fname argdecl compstmt END'''
@@ -198,13 +209,13 @@ def p_then(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-def p_do(p):
-	'''do : terminals
-	        | do
-	        | terminals do'''
-	p[0]=["do"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+# def p_do(p):
+# 	'''do : terminals
+# 	        | do
+# 	        | terminals do'''
+# 	p[0]=["do"]
+# 	for i in range(1,len(p)):
+# 		p[0].append(p[i])
 
 def p_block_var(p):
 	'''block_var : lhs
@@ -214,8 +225,7 @@ def p_block_var(p):
 		p[0].append(p[i])
 #########################################
 def p_mlhs(p):
-	'''mlhs : mlhs_item opt_mlhs
-			| MULTIPLY lhs'''
+	'''mlhs : mlhs_item opt_mlhs'''
 	p[0]=["mlhs"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -363,10 +373,10 @@ def p_none(p):
 	'''none : '''
 	p[0]=["none"]
 
-def p_error(p):
-	print "Syntax error in input!"
+# def p_error(p):
+# 	print "Syntax error in input!"
 
-yacc.yacc()
+yacc.yacc(debug=True)
 
 data = ""
 with open(filename,'r') as myfile:
@@ -376,4 +386,3 @@ with open(filename,'r') as myfile:
 result = yacc.parse(data)
 
 print result
-
