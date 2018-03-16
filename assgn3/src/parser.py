@@ -36,6 +36,7 @@ def p_stmts(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
+##edited last rule removed compstmt end
 def p_stmt(p):
 	'''stmt : call DO compstmt END
 			| stmt IF expr
@@ -43,7 +44,7 @@ def p_stmt(p):
 			| stmt UNTIL expr
 			| BEGIN LCBRACKET compstmt RBRACKET
 			| END LCBRACKET compstmt RBRACKET
-			| lhs EQUAL command compstmt end
+			| lhs EQUAL command
 			| expr'''
 	p[0]=["stmt"]
 	for i in range(1,len(p)):
@@ -71,16 +72,16 @@ def p_call(p):
 		p[0].append(p[i])
 
 def p_command(p):
-	'''command : primary DOT operation call_args'''
+	'''command : primary DOT VARIABLE call_args'''
 	p[0]=["command"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
 def p_function(p):
-	'''function : operation LPARENTHESIS call_args RPARENTHESIS
-				| primary DOT operation LPARENTHESIS call_args RPARENTHESIS
-				| primary DOT operation
-				| primary DOUBLECOLON operation'''
+	'''function : VARIABLE opt_bcall_args
+				| primary DOT VARIABLE LPARENTHESIS opt_call_args RPARENTHESIS
+				| primary DOT VARIABLE
+				| primary DOUBLECOLON VARIABLE'''
 	p[0]=["function"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -117,6 +118,20 @@ def p_arg(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
+def p_opt_elsifstmt(p):
+	'''opt_elsifstmt : ELSIF expr then compstmt opt_elsifstmt
+					 | none'''
+	p[0]=["opt_elsifstmt"]
+	for i in range(1,len(p)):
+		p[0].append(p[i])
+
+def p_opt_elsestmt(p):
+	'''opt_elsestmt : ELSE compstmt
+					| none'''
+	p[0]=["opt_elsestmt"]
+	for i in range(1,len(p)):
+		p[0].append(p[i])
+
 def p_primary(p):
 	'''primary : LPARENTHESIS compstmt RPARENTHESIS
 				 | literal
@@ -136,33 +151,6 @@ def p_primary(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-def p_opt_bcall_args(p):
-	'''opt_bcall_args : LPARENTHESIS call_args RPARENTHESIS
-					  | none'''
-	p[0]=["opt_bacll_args"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
-
-def p_opt_elsifstmt(p):
-	'''opt_elsifstmt : ELSIF expr then compstmt opt_elsifstmt
-					 | none'''
-	p[0]=["opt_elsifstmt"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
-
-def p_opt_elsestmt(p):
-	'''opt_elsestmt : ELSE compstmt
-					| none'''
-	p[0]=["opt_elsestmt"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
-
-def p_opt_args(p):
-	'''opt_args : args
-	            | none'''
-	p[0]=["opt_args"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
 
 def p_opt_when_args(p):
 	'''opt_when_args  : WHEN when_args then compstmt opt_when_args
@@ -171,17 +159,17 @@ def p_opt_when_args(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-def p_when_args(p):
-	'''when_args : args opt_argstuff
-				 | MULTIPLY arg'''
-	p[0]=["when_args"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
-
 def p_opt_argstuff(p):
 	'''opt_argstuff : COMMA MULTIPLY arg
 					| none'''
 	p[0]=["opt_argstuff"]
+	for i in range(1,len(p)):
+		p[0].append(p[i])
+
+def p_when_args(p):
+	'''when_args : args opt_argstuff
+				 | MULTIPLY arg'''
+	p[0]=["when_args"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
@@ -207,32 +195,33 @@ def p_block_var(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 #########################################
-def p_mlhs(p):
-	'''mlhs : mlhs_item opt_mlhs'''
-	p[0]=["mlhs"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
-
 def p_opt_mlhs(p):
 	'''opt_mlhs : COMMA mlhs_item opt_mlhs
 				| none'''
 	p[0]=["opt_mlhs"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
+
+def p_mlhs(p):
+	'''mlhs : mlhs_item opt_mlhs'''
+	p[0]=["mlhs"]
+	for i in range(1,len(p)):
+		p[0].append(p[i])
+
 #########################################
 
 
 def p_mlhs_item(p):
-	'''mlhs_item : lhs
-				 | LPARENTHESIS mlhs RPARENTHESIS'''
+	'''mlhs_item : lhs'''
 	p[0]=["mlhs_item"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
 def p_lhs(p):
-	'''lhs : variable
+	'''lhs : VARIABLE
 	       | primary LBRACKET opt_args RBRACKET
-	       | primary DOT VARIABLE'''
+	       | primary DOT VARIABLE
+	       | NIL'''
 	p[0]=["lhs"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -241,6 +230,27 @@ def p_mrhs(p):
 	'''mrhs : args opt_argstuff
 			| MULTIPLY arg'''
 	p[0]=["mrhs"]
+	for i in range(1,len(p)):
+		p[0].append(p[i])
+
+def p_opt_call_args(p):
+	'''opt_call_args : call_args
+					 | none'''
+	p[0]=["opt_call_args"]
+	for i in (1,len(p)):
+		p[0].append(p[i])
+
+def p_opt_bcall_args(p):
+	'''opt_bcall_args : LPARENTHESIS call_args RPARENTHESIS
+					  | none'''
+	p[0]=["opt_bacll_args"]
+	for i in range(1,len(p)):
+		p[0].append(p[i])
+
+def p_opt_argstuff2(p):
+	'''opt_argstuff2 : COMMA BINARY_AND arg
+	                | none'''
+	p[0]=["opt_argstuff2"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
@@ -254,12 +264,15 @@ def p_call_args(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-def p_opt_argstuff2(p):
-	'''opt_argstuff2 : COMMA BINARY_AND arg
-	                | none'''
-	p[0]=["opt_argstuff2"]
+
+
+def p_opt_args(p):
+	'''opt_args : args
+	            | none'''
+	p[0]=["opt_args"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
+
 
 def p_args(p):
 	'''args : arg
@@ -275,14 +288,6 @@ def p_argdecl(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-def p_arglist(p):
-	'''arglist : VARIABLE opt_variables
-			   | MULTIPLY VARIABLE opt_variables
-			   | BINARY_AND VARIABLE opt_variables'''
-	p[0]=["arglist"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
-
 def p_opt_variables(p):
 	'''opt_variables : COMMA VARIABLE opt_variables
 			   | COMMA MULTIPLY VARIABLE opt_variables
@@ -292,11 +297,20 @@ def p_opt_variables(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-def p_variable(p):
-	'''variable : varname'''
-	p[0]=["variable"]
+def p_arglist(p):
+	'''arglist : VARIABLE opt_variables
+			   | MULTIPLY VARIABLE opt_variables
+			   | BINARY_AND VARIABLE opt_variables'''
+	p[0]=["arglist"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
+
+
+# def p_variable(p):
+# 	'''variable : varname'''
+# 	p[0]=["variable"]
+# 	for i in range(1,len(p)):
+# 		p[0].append(p[i])
 
 def p_literal(p):
 	'''literal : INTNUMBER
@@ -330,11 +344,11 @@ def p_fname(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-def p_operation(p):
-	'''operation : VARIABLE'''
-	p[0]=["operation"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+# def p_operation(p):
+# 	'''operation : VARIABLE'''
+# 	p[0]=["operation"]
+# 	for i in range(1,len(p)):
+# 		p[0].append(p[i])
 
 def p_varname(p):
 	'''varname : global
