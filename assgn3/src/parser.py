@@ -23,20 +23,6 @@ def p_program(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-def p_terminals(p):
-	'''terminals : SEMICOLON
-				 | NEWLINE'''
-	p[0]=["terminals"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
-
-def p_opt_terminals(p):
-	'''opt_terminals : terminals
-					 | none'''
-	p[0]=["opt_terminals"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
-
 def p_compstmt(p):
 	'''compstmt : stmts opt_terminals'''
 	p[0]=["compstmt"]
@@ -71,7 +57,8 @@ def p_expr(p):
 			| NOT expr
 			| command
 			| LOGICAL_NOT command
-			| arg'''
+			| arg
+			| none'''
 	p[0]=["expr"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -84,14 +71,13 @@ def p_call(p):
 		p[0].append(p[i])
 
 def p_command(p):
-	'''command : operation call_args
-			   | primary DOT operation call_args'''
+	'''command : primary DOT operation call_args'''
 	p[0]=["command"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
 def p_function(p):
-	'''function : operation opt_bcall_args
+	'''function : operation LPARENTHESIS call_args RPARENTHESIS
 				| primary DOT operation LPARENTHESIS call_args RPARENTHESIS
 				| primary DOT operation
 				| primary DOUBLECOLON operation'''
@@ -102,6 +88,7 @@ def p_function(p):
 def p_arg(p):
 	'''arg : lhs EQUAL arg
 		   | lhs op_asgn arg
+		   | arg DOUBLEDOT arg
 		   | arg PLUS arg
 		   | arg MINUS arg
 		   | arg MULTIPLY arg
@@ -133,7 +120,6 @@ def p_arg(p):
 def p_primary(p):
 	'''primary : LPARENTHESIS compstmt RPARENTHESIS
 				 | literal
-				 | variable
 				 | primary LBRACKET opt_args RBRACKET
 				 | RETURN opt_bcall_args
 				 | function
@@ -193,10 +179,8 @@ def p_when_args(p):
 		p[0].append(p[i])
 
 def p_opt_argstuff(p):
-	'''opt_argstuff : COMMA
-					| MULTIPLY
-					| arg
-	                | none'''
+	'''opt_argstuff : COMMA MULTIPLY arg
+					| none'''
 	p[0]=["opt_argstuff"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -218,8 +202,7 @@ def p_then(p):
 # 		p[0].append(p[i])
 
 def p_block_var(p):
-	'''block_var : lhs
-				 | mlhs'''
+	'''block_var : mlhs'''
 	p[0]=["block_var"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -264,7 +247,6 @@ def p_mrhs(p):
 def p_call_args(p):
 	'''call_args : args
 				 | args opt_argstuff opt_argstuff2
-				 | opt_argstuff2
 				 | MULTIPLY arg opt_argstuff2
 				 | BINARY_AND arg
 				 | command'''
@@ -273,9 +255,7 @@ def p_call_args(p):
 		p[0].append(p[i])
 
 def p_opt_argstuff2(p):
-	'''opt_argstuff2 : COMMA
-					| BINARY_AND
-					| arg
+	'''opt_argstuff2 : COMMA BINARY_AND arg
 	                | none'''
 	p[0]=["opt_argstuff2"]
 	for i in range(1,len(p)):
@@ -372,6 +352,22 @@ def p_global(p):
 def p_none(p):
 	'''none : '''
 	p[0]=["none"]
+
+
+def p_terminals(p):
+	'''terminals : SEMICOLON
+				 | NEWLINE'''
+	p[0]=["terminals"]
+	for i in range(1,len(p)):
+		p[0].append(p[i])
+
+def p_opt_terminals(p):
+	'''opt_terminals : terminals
+					 | none'''
+	p[0]=["opt_terminals"]
+	for i in range(1,len(p)):
+		p[0].append(p[i])
+
 
 # def p_error(p):
 # 	print "Syntax error in input!"
