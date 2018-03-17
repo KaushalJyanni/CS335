@@ -19,6 +19,7 @@ precedence = (
     ('left', 'MULTIPLY', 'DIVIDE','REMAINDER'),
 )
 
+
 def p_program(p):
 	'''program : compstmt'''
 	p[0]=["program"]
@@ -31,9 +32,10 @@ def p_compstmt(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
+########todo make stmt instead of expr
 def p_stmts(p):
-	'''stmts : stmt opt_terminals
-			 | stmts terminals stmt'''
+	'''stmts : stmts terminals expr
+			 | stmt'''
 	p[0]=["stmts"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -47,6 +49,8 @@ def p_stmt(p):
 			| stmt UNTIL expr
 			| BEGIN LCBRACKET compstmt RBRACKET
 			| END LCBRACKET compstmt RBRACKET
+			| lhs EQUAL command
+			| lhs EQUAL command do compstmt END
 			| expr'''
 	p[0]=["stmt"]
 	for i in range(1,len(p)):
@@ -182,7 +186,7 @@ def p_when_args(p):
 def p_then(p):
 	'''then : terminals
 	        | THEN
-	        | terminals THEN'''
+	        | THEN terminals'''
 	p[0]=["then"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -403,7 +407,7 @@ with open(filename,'r') as myfile:
 print "check"
 print data
 print "check"
-result = yacc.parse(data)
+result = yacc.parse(data[:-1])
 
 # for item in result:
 # 	for item1 in item:
