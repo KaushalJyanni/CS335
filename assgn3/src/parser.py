@@ -78,9 +78,9 @@ def p_command(p):
 		p[0].append(p[i])
 
 def p_function(p):
-	'''function : VARIABLE opt_bcall_args
-				| primary DOT VARIABLE LPARENTHESIS opt_call_args RPARENTHESIS
-				| primary DOT VARIABLE
+	'''function : VARIABLE LPARENTHESIS call_args RPARENTHESIS
+				| primary DOT VARIABLE LPARENTHESIS call_args RPARENTHESIS
+				| primary DOT VARIABLE LPARENTHESIS RPARENTHESIS
 				| primary DOUBLECOLON VARIABLE'''
 	p[0]=["function"]
 	for i in range(1,len(p)):
@@ -136,7 +136,8 @@ def p_primary(p):
 	'''primary : LPARENTHESIS compstmt RPARENTHESIS
 				 | literal
 				 | primary LBRACKET opt_args RBRACKET
-				 | RETURN opt_bcall_args
+				 | RETURN 
+				 | RETURN LPARENTHESIS call_args RPARENTHESIS
 				 | function
 				 | IF expr then compstmt opt_elsifstmt opt_elsestmt END
 				 | UNLESS expr then compstmt opt_elsestmt END
@@ -219,7 +220,6 @@ def p_mlhs_item(p):
 
 def p_lhs(p):
 	'''lhs : VARIABLE
-	       | primary LBRACKET opt_args RBRACKET
 	       | primary DOT VARIABLE
 	       | NIL'''
 	p[0]=["lhs"]
@@ -233,19 +233,19 @@ def p_mrhs(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-def p_opt_call_args(p):
-	'''opt_call_args : call_args
-					 | none'''
-	p[0]=["opt_call_args"]
-	for i in (1,len(p)):
-		p[0].append(p[i])
+# def p_opt_call_args(p):
+# 	'''opt_call_args : call_args
+# 					 | none'''
+# 	p[0]=["opt_call_args"]
+# 	for i in (1,len(p)):
+# 		p[0].append(p[i])
 
-def p_opt_bcall_args(p):
-	'''opt_bcall_args : LPARENTHESIS call_args RPARENTHESIS
-					  | none'''
-	p[0]=["opt_bacll_args"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+# def p_opt_bcall_args(p):
+# 	'''opt_bcall_args : LPARENTHESIS call_args RPARENTHESIS
+# 					  | none'''
+# 	p[0]=["opt_bacll_args"]
+# 	for i in range(1,len(p)):
+# 		p[0].append(p[i])
 
 def p_opt_argstuff2(p):
 	'''opt_argstuff2 : COMMA BINARY_AND arg
@@ -258,8 +258,7 @@ def p_call_args(p):
 	'''call_args : args
 				 | args opt_argstuff opt_argstuff2
 				 | MULTIPLY arg opt_argstuff2
-				 | BINARY_AND arg
-				 | command'''
+				 | BINARY_AND arg'''
 	p[0]=["call_args"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -364,7 +363,8 @@ def p_global(p):
 		p[0].append(p[i])
 
 def p_none(p):
-	'''none : '''
+	'''none :
+	'''
 	p[0]=["none"]
 
 
