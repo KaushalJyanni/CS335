@@ -3,7 +3,7 @@ import ply.lex as lex
 import sys
 reserved = {
    'BEGIN' : 'BEGIN',
-   'END' : 'END',
+   'end' : 'END',
    'and' : 'AND',
    'begin' : 'begin',
    'break' : 'BREAK',
@@ -13,7 +13,6 @@ reserved = {
    'do' : 'DO',
    'else' : 'ELSE',
    'elsif' : 'ELSIF',
-   'end' : 'end',
    'false' : 'FALSE',
    'for' : 'FOR',
    'if' : 'IF',

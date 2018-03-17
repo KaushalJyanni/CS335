@@ -1,6 +1,8 @@
 import ply.yacc as yacc
 import sys
 from lexer import tokens
+import types
+body =""
 filename = sys.argv[1]
 
 precedence = (
@@ -30,8 +32,8 @@ def p_compstmt(p):
 		p[0].append(p[i])
 
 def p_stmts(p):
-	'''stmts : stmt
-			 | stmt terminals expr'''
+	'''stmts : stmt opt_terminals
+			 | stmts terminals stmt'''
 	p[0]=["stmts"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -40,11 +42,11 @@ def p_stmts(p):
 def p_stmt(p):
 	'''stmt : call DO compstmt END
 			| stmt IF expr
+			| stmt WHILE expr
 			| stmt UNLESS expr
 			| stmt UNTIL expr
 			| BEGIN LCBRACKET compstmt RBRACKET
 			| END LCBRACKET compstmt RBRACKET
-			| lhs EQUAL command
 			| expr'''
 	p[0]=["stmt"]
 	for i in range(1,len(p)):
@@ -58,8 +60,7 @@ def p_expr(p):
 			| NOT expr
 			| command
 			| LOGICAL_NOT command
-			| arg
-			| none'''
+			| args'''
 	p[0]=["expr"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -72,7 +73,8 @@ def p_call(p):
 		p[0].append(p[i])
 
 def p_command(p):
-	'''command : primary DOT VARIABLE call_args'''
+	'''command : VARIABLE call_args
+			   | primary DOT VARIABLE call_args'''
 	p[0]=["command"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -80,7 +82,7 @@ def p_command(p):
 def p_function(p):
 	'''function : VARIABLE LPARENTHESIS call_args RPARENTHESIS
 				| primary DOT VARIABLE LPARENTHESIS call_args RPARENTHESIS
-				| primary DOT VARIABLE LPARENTHESIS RPARENTHESIS
+				| primary DOT VARIABLE
 				| primary DOUBLECOLON VARIABLE'''
 	p[0]=["function"]
 	for i in range(1,len(p)):
@@ -134,15 +136,18 @@ def p_opt_elsestmt(p):
 
 def p_primary(p):
 	'''primary : LPARENTHESIS compstmt RPARENTHESIS
+				 | VARIABLE
 				 | literal
 				 | primary LBRACKET opt_args RBRACKET
+				 | LBRACKET opt_args RBRACKET
+				 | LCBRACKET opt_args RCBRACKET
 				 | RETURN 
 				 | RETURN LPARENTHESIS call_args RPARENTHESIS
 				 | function
 				 | IF expr then compstmt opt_elsifstmt opt_elsestmt END
 				 | UNLESS expr then compstmt opt_elsestmt END
-				 | WHILE expr DO compstmt END
-				 | UNTIL expr DO compstmt END
+				 | WHILE expr do compstmt END
+				 | UNTIL expr do compstmt END
 				 | CASE compstmt WHEN when_args then compstmt opt_when_args opt_elsestmt END
 				 | FOR block_var IN expr DO compstmt END
 				 | BEGIN compstmt END
@@ -182,13 +187,13 @@ def p_then(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-# def p_do(p):
-# 	'''do : terminals
-# 	        | do
-# 	        | terminals do'''
-# 	p[0]=["do"]
-# 	for i in range(1,len(p)):
-# 		p[0].append(p[i])
+def p_do(p):
+	'''do : terminals
+	        | DO
+	        | terminals DO'''
+	p[0]=["do"]
+	for i in range(1,len(p)):
+		p[0].append(p[i])
 
 def p_block_var(p):
 	'''block_var : mlhs'''
@@ -233,12 +238,12 @@ def p_mrhs(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-# def p_opt_call_args(p):
-# 	'''opt_call_args : call_args
-# 					 | none'''
-# 	p[0]=["opt_call_args"]
-# 	for i in (1,len(p)):
-# 		p[0].append(p[i])
+def p_opt_call_args(p):
+	'''opt_call_args : call_args
+					 | none'''
+	p[0]=["opt_call_args"]
+	for i in (1,len(p)):
+		p[0].append(p[i])
 
 # def p_opt_bcall_args(p):
 # 	'''opt_bcall_args : LPARENTHESIS call_args RPARENTHESIS
@@ -258,7 +263,8 @@ def p_call_args(p):
 	'''call_args : args
 				 | args opt_argstuff opt_argstuff2
 				 | MULTIPLY arg opt_argstuff2
-				 | BINARY_AND arg'''
+				 | BINARY_AND arg
+				 | call_args'''
 	p[0]=["call_args"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -349,12 +355,12 @@ def p_fname(p):
 # 	for i in range(1,len(p)):
 # 		p[0].append(p[i])
 
-def p_varname(p):
-	'''varname : global
-			   | VARIABLE'''
-	p[0]=["varname"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+# def p_varname(p):
+# 	'''varname : global
+# 			   | VARIABLE'''
+# 	p[0]=["varname"]
+# 	for i in range(1,len(p)):
+# 		p[0].append(p[i])
 
 def p_global(p):
 	'''global : DOLLAR_VARIABLE'''
@@ -381,18 +387,28 @@ def p_opt_terminals(p):
 	p[0]=["opt_terminals"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
+		 
 
 
 # def p_error(p):
 # 	print "Syntax error in input!"
 
-yacc.yacc(debug=True)
+yacc.yacc()
 
 data = ""
 with open(filename,'r') as myfile:
 	for line in myfile.readlines():
 		if line!='\n':
 			data = data + line
+print "check"
+print data
+print "check"
 result = yacc.parse(data)
 
+# for item in result:
+# 	for item1 in item:
+# 		print item1
+# 		print "\n"
+# 	print "\n"
+# printRightDeriv(result)
 print result
