@@ -77,17 +77,17 @@ def p_call(p):
 		p[0].append(p[i])
 
 def p_command(p):
-	'''command : VARIABLE call_args
-			   | primary DOT VARIABLE call_args'''
+	'''command : variable call_args
+			   | primary DOT variable call_args'''
 	p[0]=["command"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
 def p_function(p):
-	'''function : VARIABLE LPARENTHESIS call_args RPARENTHESIS
-				| primary DOT VARIABLE LPARENTHESIS call_args RPARENTHESIS
-				| primary DOT VARIABLE
-				| primary DOUBLECOLON VARIABLE'''
+	'''function : variable LPARENTHESIS call_args RPARENTHESIS
+				| primary DOT variable LPARENTHESIS call_args RPARENTHESIS
+				| primary DOT variable
+				| primary DOUBLECOLON variable'''
 	p[0]=["function"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -140,7 +140,7 @@ def p_opt_elsestmt(p):
 
 def p_primary(p):
 	'''primary : LPARENTHESIS compstmt RPARENTHESIS
-				 | VARIABLE
+				 | variable
 				 | literal
 				 | primary LBRACKET opt_args RBRACKET
 				 | LBRACKET opt_args RBRACKET
@@ -155,7 +155,7 @@ def p_primary(p):
 				 | CASE compstmt WHEN when_args then compstmt opt_when_args opt_elsestmt END
 				 | FOR block_var IN expr do compstmt END
 				 | BEGIN compstmt END
-				 | CLASS VARIABLE compstmt END
+				 | CLASS variable compstmt END
 				 | DEF fname argdecl compstmt END'''
 	p[0]=["primary"]
 	for i in range(1,len(p)):
@@ -228,8 +228,8 @@ def p_mlhs_item(p):
 		p[0].append(p[i])
 
 def p_lhs(p):
-	'''lhs : VARIABLE
-	       | primary DOT VARIABLE
+	'''lhs : variable
+	       | primary DOT variable
 	       | NIL'''
 	p[0]=["lhs"]
 	for i in range(1,len(p)):
@@ -256,12 +256,12 @@ def p_opt_call_args(p):
 # 	for i in range(1,len(p)):
 # 		p[0].append(p[i])
 
-def p_opt_argstuff2(p):
-	'''opt_argstuff2 : opt_argstuff2 COMMA BINARY_AND arg
-	                | none'''
-	p[0]=["opt_argstuff2"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+# def p_opt_argstuff2(p):
+# 	'''opt_argstuff2 : opt_argstuff2 COMMA BINARY_AND arg
+# 	                | none'''
+# 	p[0]=["opt_argstuff2"]
+# 	for i in range(1,len(p)):
+# 		p[0].append(p[i])
 
 def p_call_args(p):
 	'''call_args : call_args COMMA call_args
@@ -298,18 +298,18 @@ def p_argdecl(p):
 		p[0].append(p[i])
 
 def p_opt_variables(p):
-	'''opt_variables : COMMA VARIABLE opt_variables
-			   | COMMA MULTIPLY VARIABLE opt_variables
-			   | COMMA BINARY_AND VARIABLE opt_variables
+	'''opt_variables : COMMA variable opt_variables
+			   | COMMA MULTIPLY variable opt_variables
+			   | COMMA BINARY_AND variable opt_variables
 			   | none'''
 	p[0]=["opt_variables"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
 def p_arglist(p):
-	'''arglist : VARIABLE opt_variables
-			   | MULTIPLY VARIABLE opt_variables
-			   | BINARY_AND VARIABLE opt_variables'''
+	'''arglist : variable opt_variables
+			   | MULTIPLY variable opt_variables
+			   | BINARY_AND variable opt_variables'''
 	p[0]=["arglist"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -348,27 +348,28 @@ def p_op_asgn(p):
 		p[0].append(p[i])
 
 def p_fname(p):
-	'''fname : VARIABLE'''
+	'''fname : variable'''
 	p[0]=["fname"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
 # def p_operation(p):
-# 	'''operation : VARIABLE'''
+# 	'''operation : variable'''
 # 	p[0]=["operation"]
 # 	for i in range(1,len(p)):
 # 		p[0].append(p[i])
 
 # def p_varname(p):
 # 	'''varname : global
-# 			   | VARIABLE'''
+# 			   | variable'''
 # 	p[0]=["varname"]
 # 	for i in range(1,len(p)):
 # 		p[0].append(p[i])
 
-def p_global(p):
-	'''global : DOLLAR_VARIABLE'''
-	p[0]=["global"]
+def p_variable(p):
+	'''variable : VARIABLE
+			    | DOLLAR VARIABLE'''
+	p[0]=["variable"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
@@ -392,10 +393,8 @@ def p_opt_terminals(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 		 
-
-
-# def p_error(p):
-# 	print "Syntax error in input!"
+def p_error(p):
+	print "Syntax error"
 
 yacc.yacc()
 
@@ -404,15 +403,7 @@ with open(filename,'r') as myfile:
 	for line in myfile.readlines():
 		if line!='\n':
 			data = data + line
-print "check"
-print data
-print "check"
+
 result = yacc.parse(data[:-1])
 
-# for item in result:
-# 	for item1 in item:
-# 		print item1
-# 		print "\n"
-# 	print "\n"
-# printRightDeriv(result)
 print result
