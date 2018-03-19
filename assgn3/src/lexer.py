@@ -159,7 +159,7 @@ lexer.input(str(data))
 token = lexer.token() 
 results=dict()
 while token:
-   print token
+   # print token
    if token.type in results:
       results[token.type][0]+=1
       if token.value in results[token.type][1:]:
@@ -173,13 +173,13 @@ while token:
       results[token.type].append(token.value)
    token = lexer.token()
 # print results
-print "\n"
-print "TOKEN".ljust(25),"Occurences".ljust(15),"Lexemes"
-print "-------------------------------------------------"
+# print "\n"
+# print "TOKEN".ljust(25),"Occurences".ljust(15),"Lexemes"
+# print "-------------------------------------------------"
 keys = list(reserved.values())+['VARIABLE','DOLLAR_VARIABLE','FLOATNUMBER','INTNUMBER','STRING','COMMENT','IGNORED', 'NEWLINE']+arithmetic+symbols
 # print keys
-for item in keys:
-   if item in results.keys():
-      print str(item).ljust(25),str(results[item][0]).ljust(15),str(results[item][1])
-      for value in results[item][2:]:
-         print "".ljust(41),value
+# for item in keys:
+#    if item in results.keys():
+#       print str(item).ljust(25),str(results[item][0]).ljust(15),str(results[item][1])
+#       for value in results[item][2:]:
+#          print "".ljust(41),value
