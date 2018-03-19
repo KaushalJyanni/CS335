@@ -56,7 +56,7 @@ t_GREATER_THAN_EQ  = r'>='
 t_LESS_THAN = r'<'
 t_LESS_THAN_EQ = r'<='
 t_EQUALS = r'=='
-t_NOT_EQUALS = r'!='
+t_NOT_EQUALS = r'{!}='
 t_LOGICAL_NOT = r'!'
 t_BINARY_1COMPLEMENT = r'~'
 t_BINARY_LSHIFT = r'<<'
@@ -108,12 +108,12 @@ def t_DOLLAR_VARIABLE(t):
 
 def t_FLOATNUMBER(t):
    r'\d+\.\d+'
-   t.value=float(t.value)
+   t.value=str(float(t.value))
    return t
 
 def t_INTNUMBER(t):
    r'\d+'
-   t.value = int(t.value)
+   t.value = str(int(t.value))
    return t
 
 def t_STRING(t):

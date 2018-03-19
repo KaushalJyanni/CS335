@@ -153,7 +153,7 @@ def p_primary(p):
 				 | WHILE expr do compstmt END
 				 | UNTIL expr do compstmt END
 				 | CASE compstmt WHEN when_args then compstmt opt_when_args opt_elsestmt END
-				 | FOR block_var IN expr DO compstmt END
+				 | FOR block_var IN expr do compstmt END
 				 | BEGIN compstmt END
 				 | CLASS VARIABLE compstmt END
 				 | DEF fname argdecl compstmt END'''
@@ -170,7 +170,7 @@ def p_opt_when_args(p):
 		p[0].append(p[i])
 
 def p_opt_argstuff(p):
-	'''opt_argstuff : COMMA MULTIPLY arg
+	'''opt_argstuff : opt_argstuff COMMA MULTIPLY arg
 					| none'''
 	p[0]=["opt_argstuff"]
 	for i in range(1,len(p)):
@@ -257,18 +257,18 @@ def p_opt_call_args(p):
 # 		p[0].append(p[i])
 
 def p_opt_argstuff2(p):
-	'''opt_argstuff2 : COMMA BINARY_AND arg
+	'''opt_argstuff2 : opt_argstuff2 COMMA BINARY_AND arg
 	                | none'''
 	p[0]=["opt_argstuff2"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
 def p_call_args(p):
-	'''call_args : args
-				 | args opt_argstuff opt_argstuff2
-				 | MULTIPLY arg opt_argstuff2
+	'''call_args : call_args COMMA call_args
+				 | MULTIPLY arg
 				 | BINARY_AND arg
-				 | call_args'''
+				 | arg
+				 | command'''
 	p[0]=["call_args"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -285,13 +285,13 @@ def p_opt_args(p):
 
 def p_args(p):
 	'''args : arg
-			| arg COMMA args'''
+			| args COMMA arg'''
 	p[0]=["args"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
 def p_argdecl(p):
-	'''argdecl : LPARENTHESIS arglist RPARENTHESIS
+	'''argdecl : LPARENTHESIS arglist RPARENTHESIS opt_terminals
 			   | arglist terminals'''
 	p[0]=["argdecl"]
 	for i in range(1,len(p)):
