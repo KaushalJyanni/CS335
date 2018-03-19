@@ -19,6 +19,34 @@ precedence = (
     ('left', 'MULTIPLY', 'DIVIDE','REMAINDER'),
 )
 
+def printfinal(tree,counter):
+	global body
+	allLeaves = True
+	if (type(tree) == None):
+		return tree
+	else:
+		for i in range(1,len(tree)):
+			if(isinstance(tree[i], types.StringTypes) == True):
+				#print tree[i]
+				if "#" in tree[i]:
+					tree[i] = tree[i][:-1]
+					body = body + "<b>" + " " + tree[i] + "</b>"
+				else:
+					body = body + " " + tree[i]
+			else:
+				tree[i] = printfinal(tree[i], (allLeaves and counter))
+				allLeaves = False
+		if(allLeaves == True and counter == True):
+			tree = tree[0]+"#"
+		return tree
+
+def printRightDeriv(tree):
+	global body
+	while(isinstance(tree, types.StringTypes) == False):
+		tree = printfinal(tree,True)
+		print body + "<br>"
+		body = ""
+	print "<b>" + tree[:-1] + "</b>" + "<br>"
 
 def p_program(p):
 	'''program : compstmt'''
@@ -404,6 +432,6 @@ with open(filename,'r') as myfile:
 		if line!='\n':
 			data = data + line
 
-result = yacc.parse(data[:-1])
+result = yacc.parse(data)
 
-print result
+printRightDeriv(result)
