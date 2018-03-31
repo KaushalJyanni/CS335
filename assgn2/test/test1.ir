@@ -1,5 +1,9 @@
-1, =, a, 2
-2, =, b, 7
-3, +, a, a, b
-4, ifgoto, leq, a, 8, 2
-5, retvoid
+1, =, a, 5
+2, =, b, 150
+3, label, makebig
+4, ifgoto, lt, a, b, addmore
+5, print, a
+6, retvoid
+7, label, addmore
+8, +=, a, a
+9, goto, makebig

@@ -1,0 +1,4 @@
+1, scan, a
+2, *=, a, 6
+3, print, a
+4, retvoid

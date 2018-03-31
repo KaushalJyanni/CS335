@@ -26,7 +26,7 @@ name={
 	'lt':"jl",
 	'geq':"jge",
 	'gt':"jg",
-	'eq':"jeq",
+	'eq':"je",
 	'neq':"jne"
 }
 
@@ -71,6 +71,9 @@ def gencode(i,instruction,nextinfotable):
 					print "movl\t%"+addrdesc[instruction.src1][0]+",\t%eax"
 				else:
 					print "movl\t("+instruction.src1+"),\t%eax"
+					# regdesc["eax"]=instruction.src1
+					# addrdesc[instruction.src1][0]="eax"
+					# addrdesc[instruction.src1][1]=False
 				#divisor
 				if(not check_int(instruction.src2)):
 					if(addrdesc[instruction.src2][0]):

@@ -52,7 +52,7 @@ def farthest(instruction,insnumber,nextinfotable):
 
 def getreg(instruction,insnumber,nextinfotable,var):
 	#x=y op z
-	if(instruction.operation=="/" or instruction.operation=="/="):
+	if(instruction.operation=="/" or instruction.operation=="/=" or instruction.operation=="%" or instruction.operation=="%="):
 		if(not regdesc["ebx"]):
 			return "ebx"
 		elif(not regdesc["ecx"]):

@@ -1,0 +1,8 @@
+1, =, a, 1
+2, =, b, 5
+3, callint, c, foo
+4, print,c 
+5, retvoid
+6, label, foo
+7, -, d, a, b
+8, retint, d
