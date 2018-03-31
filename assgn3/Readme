@@ -1,0 +1,14 @@
+Group - 33
+Manthan Sit - 150388 Kaushal Jyanni - 150325
+
+Files: run.sh (Shell script for printing html)
+       parser.py
+       lexer.py
+
+Test files - test1.rb, test2.rb, test3.rb, test4.rb, test5.rb, test6.rb
+
+Run: Commands
+- cd asgn3
+- make
+- bin/parser test/test1.rb (to execute the first test-case file test1.rb)
+- firefox test1.html

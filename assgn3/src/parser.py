@@ -27,7 +27,6 @@ def printfinal(tree,counter):
 	else:
 		for i in range(1,len(tree)):
 			if(isinstance(tree[i], types.StringTypes) == True):
-				#print tree[i]
 				if "#" in tree[i]:
 					tree[i] = tree[i][:-1]
 					body = body + "<b>" + " " + tree[i] + "</b>"
@@ -60,7 +59,6 @@ def p_compstmt(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-########todo make stmt instead of expr
 def p_stmts(p):
 	'''stmts : stmts terminals expr
 			 | stmt'''
@@ -68,7 +66,6 @@ def p_stmts(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
-##edited last rule removed compstmt end
 def p_stmt(p):
 	'''stmt : call DO compstmt END
 			| stmt IF expr
@@ -183,7 +180,7 @@ def p_primary(p):
 				 | CASE compstmt WHEN when_args then compstmt opt_when_args opt_elsestmt END
 				 | FOR block_var IN expr do compstmt END
 				 | BEGIN compstmt END
-				 | CLASS variable compstmt END
+				 | CLASS variable terminals compstmt END
 				 | DEF fname argdecl compstmt END'''
 	p[0]=["primary"]
 	for i in range(1,len(p)):
@@ -296,7 +293,8 @@ def p_call_args(p):
 				 | MULTIPLY arg
 				 | BINARY_AND arg
 				 | arg
-				 | command'''
+				 | command
+				 | none'''
 	p[0]=["call_args"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -337,7 +335,8 @@ def p_opt_variables(p):
 def p_arglist(p):
 	'''arglist : variable opt_variables
 			   | MULTIPLY variable opt_variables
-			   | BINARY_AND variable opt_variables'''
+			   | BINARY_AND variable opt_variables
+			   | none'''
 	p[0]=["arglist"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -412,7 +411,10 @@ def p_terminals(p):
 				 | NEWLINE'''
 	p[0]=["terminals"]
 	for i in range(1,len(p)):
-		p[0].append(p[i])
+		if(p[i]!='\n'):
+			p[0].append(p[i])
+		else:
+			p[0].append("Newline")
 
 def p_opt_terminals(p):
 	'''opt_terminals : terminals
@@ -421,8 +423,8 @@ def p_opt_terminals(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 		 
-def p_error(p):
-	print "Syntax error"
+# def p_error(p):
+# 	print "Syntax error"
 
 yacc.yacc()
 
@@ -433,5 +435,5 @@ with open(filename,'r') as myfile:
 			data = data + line
 
 result = yacc.parse(data)
-
+# print result
 printRightDeriv(result)
