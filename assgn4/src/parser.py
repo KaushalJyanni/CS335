@@ -6,6 +6,15 @@ import sym_table
 body =""
 filename = sys.argv[1]
 
+
+relop={
+	"<=":'leq',
+	"<":'lt',
+	">=":'geq',
+	">":'gt',
+	"==":'eq',
+	"!=":'neq'
+}
 precedence = (
     ('right','EQUAL', 'NOT'),
     ('left', 'LOGICAL_OR'),
@@ -61,6 +70,8 @@ class Node:
 		self.type=""
 		self.code=[]
 		self.place=""
+		self.place2=""
+		self.label=""
 		# self.next=None
 
 st = sym_table.Symtable()
@@ -73,7 +84,7 @@ def p_program(p):
 def p_compstmt(p):
 	'''compstmt : stmts opt_terminals'''
 	p[0] = p[1]
-	print "check:comp ", p[0]
+	# print "check:comp ", p[0]
 	if(p[2]!=None):
 		p[0].code += p[2].code
 
@@ -83,11 +94,11 @@ def p_stmts(p):
 	
 	if(len(p)==4):
 		p[0]=p[1]
-		print "checks of error",p[0].code, p[2].code, p[3].code 
+		# print "checks of error",p[0].code, p[2].code, p[3].code 
 		p[0].code += p[2].code + p[3].code
 	else:
 		p[0]=p[1]
-	print "check: stmts", p[0]
+	# print "check: stmts", p[0]
 
 def p_stmt(p):
 	'''stmt : expr
@@ -114,7 +125,7 @@ def p_expr(p):
 			| args'''
 	if(len(p)==2):
 		p[0]=p[1]
-		print "check:expr",p[0].code
+		# print "check:expr",p[0].code
 
 def p_call(p):
 	'''call : function
@@ -155,6 +166,7 @@ def p_arg(p):
 		   | arg GREATER_THAN arg
 		   | arg GREATER_THAN_EQ arg
 		   | arg LESS_THAN arg
+		   | NOT arg
 		   | arg LESS_THAN_EQ arg
 		   | arg EQUALS arg
 		   | arg NOT_EQUALS arg
@@ -165,23 +177,40 @@ def p_arg(p):
 		   | arg LOGICAL_OR arg
 		   | primary'''
 	checkcount=1
-	print checkcount
-	checkcount +=1
+	# print checkcount
+	checkcount += 1
 	if(len(p)==4):
-		if(p[2] in ['+','-','/','*','%','^','|','<<','>>','&']):
+		if(p[2]==".."):
+			# print "doule dot niggers *******************8"
+			p[0]=Node()
+			p[0].place=p[1].place
+			p[0].place2=p[3].place
+			print p[0]
+		elif(p[2] in ['+','-','/','*','%','^','|','<<','>>','&','&&','||',"<=","<",">=",">","==","!="]):
 			temp = st.newtemp()
-			print "check arg p1 ",p[1].code
-			print "check arg p3 ",p[3].code
+			# print "check arg p1 ",p[1].code
+			# print "check arg p3 ",p[3].code
 			p[0]=Node()
 			p[0].code = p[1].code + p[3].code
 			p[0].place = temp
-			if(not st.lookup(p[1].place)):
-				print "error. variable, "+ p[1].place +" value not assigned before"
-				sys.exit()
-			if(not st.lookup(p[3].place)):
-				print "error. variable, "+ p[3].place +" value not assigned before"
-				sys.exit()
-			p[0].code += [p[2]+", "+p[0].place+", "+p[1].place+", "+p[3].place+" \n"]
+			# if(not st.lookup(p[1].place)):
+			# 	print "error. variable, "+ p[1].place +" value not assigned before"
+			# 	sys.exit()
+			# if(not st.lookup(p[3].place)):
+			# 	print "error. variable, "+ p[3].place +" value not assigned before"
+			# 	sys.exit()
+			if(p[2] in ["<=","<",">=",">","==","!="]):
+				# print "did the big stuff"
+				lab1 = st.newlabel()
+				lab2 = st.newlabel()
+				p[0].code += ["ifgoto, ",relop[p[2]]+", "+p[1].place+", "+p[3].place+", "+lab1+" \n"]
+				p[0].code += ["=, "+p[0].place+", 0 \n"]
+				p[0].code += ["goto, "+lab2+" \n"]
+				p[0].code += [lab1+": \n"]
+				p[0].code += ["=, "+p[0].place+", 1 \n"]
+				p[0].code += [lab2+": \n"]
+			else:	
+				p[0].code += [p[2]+", "+p[0].place+", "+p[1].place+", "+p[3].place+" \n"]
 		elif(p[2]=='='):
 			p[0]=Node()
 			if(not st.lookup(p[1])):
@@ -192,28 +221,53 @@ def p_arg(p):
 				if(not st.lookup(p[3].place)):
 					print "error. variable, "+ p[3].place +" value not assigned before"
 					sys.exit()
-			print "check arg p1 ",p[1].code
-			print "check arg p3 ",p[3].code
-			print "concatenating", ''.join([p[2]]+[", "]+[p[1].place]+[", "]+[p[3].place])
+			# print "check arg p1 ",p[1].code
+			# print "check arg p3 ",p[3].code
+			# print "concatenating", ''.join([p[2]]+[", "]+[p[1].place]+[", "]+[p[3].place])
 			p[0].code = p[1].code + p[3].code
 			p[0].code += [p[2]+", "+p[1].place+", "+p[3].place+" \n"]
-	if(len(p)==2):
+	elif(len(p)==2):
 		p[0] = p[1]
-	print "check: arg", ''.join(p[0].code)
+	elif(len(p)==3):
+		temp = st.newtemp()
+		p[0]=Node()
+		p[0].place=temp
+		if(not st.lookup(p[2].place)):
+				print "error. variable, "+ p[2].place +" value not assigned before"
+				sys.exit()
+		p[0].code += ["not, "+p[0].place+", "+p[2].place+" \n"]
+	# print "check: arg", ''.join(p[0].code)
 
 def p_opt_elsifstmt(p):
 	'''opt_elsifstmt : ELSIF expr then compstmt opt_elsifstmt
 					 | none'''
-	p[0]=["opt_elsifstmt"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+	if(len(p)==6):
+		lab1=st.newlabel()
+		p[0]=Node()
+		p[0].label=lab1
+		p[0].code += [p[0].label,": \n"]
+		p[0].code += p[2].code
+		if(p[5]):
+			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+p[5].label+" \n"]
+		else:
+			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+st.elselabel()+" \n"]
+		p[0].code += p[4].code
+		p[0].code += ["goto, "+st.afterlabel()+"\n"]
+		if(p[5]):
+			p[0].code += p[5].code
+		print "check from elsif:",p[0].code
+	else:
+		p[0]=None
+
+
 
 def p_opt_elsestmt(p):
 	'''opt_elsestmt : ELSE compstmt
 					| none'''
-	p[0]=["opt_elsestmt"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+	if(len(p)==3):	
+		p[0]=p[2]
+		print "check from else: ",p[0].code
+
 
 def p_primary(p):
 	'''primary : LPARENTHESIS compstmt RPARENTHESIS
@@ -238,8 +292,49 @@ def p_primary(p):
 		if(p[1]!='return'):
 			p[0]=p[1]
 			p[0].place = p[1].place
-
-
+	elif(p[1]=="while"):
+		lab1 = st.newlabel()
+		lab2 = st.newlabel()
+		p[0]=Node()
+		p[0].code += [lab1+": \n"]
+		p[0].code += p[2].code
+		p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+lab2+" \n"]
+		p[0].code += p[4].code
+		p[0].code += ["goto, "+lab1+"\n"]
+		p[0].code += [lab2+": \n"]
+	elif(p[1]=="if"):
+		p[0]=Node()
+		p[0].code += p[2].code
+		if(p[5]):
+			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+p[5].label+" \n"]
+		else:
+			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+st.elselabel()+" \n"]
+		p[0].code += p[4].code
+		p[0].code += ["goto, "+st.afterlabel()+"\n"]
+		if(p[5]):
+			p[0].code += p[5].code
+		p[0].code += [st.elselabel()+": \n"]
+		if(p[6]):
+			p[0].code += p[6].code
+		p[0].code += [st.afterlabel()+": \n"]
+	elif(p[1]=="for"):
+		lab1 = st.newlabel()
+		p[0]=Node()
+		if(not st.lookup(p[2])):
+				st.insert(p[2].place)
+		try:
+			int(p[4].place)
+		except:
+			if(not st.lookup(p[4].place)):
+				print "error. variable, "+ p[4].place +" value not assigned before"
+				sys.exit()
+		p[0].code += ["=, "+p[2].place+", "+p[4].place+" \n"]
+		p[0].code += [lab1+": \n"]
+		p[0].code += p[6].code
+		p[0].code += ["+, ",p[2].place+", "+p[2].place+", 1\n"]
+		p[0].code += ["ifgoto, leq, "+ p[2].place+ ", "+p[4].place2+", "+lab1+" \n"]
+	elif(p[1]=="("):
+		p[0]=p[2]
 
 def p_opt_when_args(p):
 	'''opt_when_args  : WHEN when_args then compstmt opt_when_args
@@ -280,31 +375,25 @@ def p_do(p):
 
 def p_block_var(p):
 	'''block_var : mlhs'''
-	p[0]=["block_var"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+	p[0]=p[1]
 #########################################
 def p_opt_mlhs(p):
 	'''opt_mlhs : COMMA mlhs_item opt_mlhs
 				| none'''
-	p[0]=["opt_mlhs"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+
 
 def p_mlhs(p):
 	'''mlhs : mlhs_item opt_mlhs'''
-	p[0]=["mlhs"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+	p[0]=p[1]
+	if(p[2]):
+		p[0].code += p[2].code
 
 #########################################
 
 
 def p_mlhs_item(p):
 	'''mlhs_item : lhs'''
-	p[0]=["mlhs_item"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+	p[0]=p[1]
 
 def p_lhs(p):
 	'''lhs : variable
@@ -313,7 +402,7 @@ def p_lhs(p):
 	if(len(p)==2):
 		p[0]=p[1]
 		p[0].place = p[1].place
-	print "check: lhs", p[0].code
+	# print "check: lhs", p[0].code
 
 def p_mrhs(p):
 	'''mrhs : args opt_argstuff

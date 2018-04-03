@@ -3,6 +3,7 @@ class Symtable:
     def __init__(self):
         self.table={}
         self.temps=0
+        self.labels=0
 
     def lookup(self, var):
         if var in self.table.keys():
@@ -18,4 +19,17 @@ class Symtable:
         self.temps = self.temps + 1
         name = "temp"+str(self.temps)
         self.insert(name)
+        return name
+
+    def newlabel(self):
+        self.labels = self.labels + 1
+        name = "label"+str(self.labels)
+        return name
+
+    def elselabel(self):
+        name = "elselabel"
+        return name
+
+    def afterlabel(self):
+        name = "afterlabel"
         return name
