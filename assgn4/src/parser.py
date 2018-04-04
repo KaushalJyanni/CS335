@@ -6,6 +6,19 @@ import sym_table
 body =""
 filename = sys.argv[1]
 
+def type(a):
+	try:
+		float(a)
+		try:
+			int(a)
+			if(int(a)==float(a)):
+				return 'int'
+			else:
+				return 'float'
+		except:
+			return 'float'
+	except:
+		return 'string'
 
 relop={
 	"<=":'leq',
@@ -130,16 +143,14 @@ def p_expr(p):
 def p_call(p):
 	'''call : function
 			| command'''
-	p[0]=["call"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
-6
+	p[0]=p[1]
+
 def p_command(p):
 	'''command : primary DOT variable call_args'''
 	p[0]=["command"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
-
+ 	
 def p_function(p):
 	'''function : variable LPARENTHESIS call_args RPARENTHESIS
 				| primary DOT variable LPARENTHESIS call_args RPARENTHESIS
@@ -187,12 +198,17 @@ def p_arg(p):
 			p[0].place2=p[3].place
 			print p[0]
 		elif(p[2] in ['+','-','/','*','%','^','|','<<','>>','&','&&','||',"<=","<",">=",">","==","!="]):
-			temp = st.newtemp()
+			print "latest check,",p[1],p[1].code,p[1].type,p[1].place
+			if(p[1].type):
+				temp = st.newtemp(p[1].type)
+			else:
+				temp = st.newtemp(st.gettype(p[1]))	
 			# print "check arg p1 ",p[1].code
 			# print "check arg p3 ",p[3].code
 			p[0]=Node()
 			p[0].code = p[1].code + p[3].code
 			p[0].place = temp
+			p[0].type=p[1].type
 			# if(not st.lookup(p[1].place)):
 			# 	print "error. variable, "+ p[1].place +" value not assigned before"
 			# 	sys.exit()
@@ -213,12 +229,15 @@ def p_arg(p):
 				p[0].code += [p[2]+", "+p[0].place+", "+p[1].place+", "+p[3].place+" \n"]
 		elif(p[2]=='='):
 			p[0]=Node()
+			print "updating type of",p[1].place,p[3].type
+			p[1].type = p[3].type
 			if(not st.lookup(p[1])):
-					st.insert(p[1].place)
+				print "type insertion is", p[3].type, "for ",p[1].place
+				st.insert(p[1].place,p[3].type)
 			try:
-				int(p[3].place)
+				float(p[3].place)
 			except:
-				if(not st.lookup(p[3].place)):
+				if(p[3].type == "variable" and (not st.lookup(p[3].place))):
 					print "error. variable, "+ p[3].place +" value not assigned before"
 					sys.exit()
 			# print "check arg p1 ",p[1].code
@@ -226,16 +245,19 @@ def p_arg(p):
 			# print "concatenating", ''.join([p[2]]+[", "]+[p[1].place]+[", "]+[p[3].place])
 			p[0].code = p[1].code + p[3].code
 			p[0].code += [p[2]+", "+p[1].place+", "+p[3].place+" \n"]
+			p[0].type = p[3].type
 	elif(len(p)==2):
 		p[0] = p[1]
+		print "type of arg", p[0].place, p[0].type
 	elif(len(p)==3):
-		temp = st.newtemp()
+		temp = st.newtemp("bool")
 		p[0]=Node()
 		p[0].place=temp
 		if(not st.lookup(p[2].place)):
 				print "error. variable, "+ p[2].place +" value not assigned before"
 				sys.exit()
 		p[0].code += ["not, "+p[0].place+", "+p[2].place+" \n"]
+		p[0].type = "bool"
 	# print "check: arg", ''.join(p[0].code)
 
 def p_opt_elsifstmt(p):
@@ -247,12 +269,13 @@ def p_opt_elsifstmt(p):
 		p[0].label=lab1
 		p[0].code += [p[0].label,": \n"]
 		p[0].code += p[2].code
+		p[0].type="elifcode"
 		if(p[5]):
 			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+p[5].label+" \n"]
 		else:
-			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+st.elselabel()+" \n"]
+			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+st.getelabel()+" \n"]
 		p[0].code += p[4].code
-		p[0].code += ["goto, "+st.afterlabel()+"\n"]
+		p[0].code += ["goto, "+st.getalabel()+"\n"]
 		if(p[5]):
 			p[0].code += p[5].code
 		print "check from elsif:",p[0].code
@@ -292,6 +315,8 @@ def p_primary(p):
 		if(p[1]!='return'):
 			p[0]=p[1]
 			p[0].place = p[1].place
+			p[0].type = p[1].type
+			print "typye in primary of ",p[0].place, p[0].type
 	elif(p[1]=="while"):
 		lab1 = st.newlabel()
 		lab2 = st.newlabel()
@@ -302,26 +327,30 @@ def p_primary(p):
 		p[0].code += p[4].code
 		p[0].code += ["goto, "+lab1+"\n"]
 		p[0].code += [lab2+": \n"]
+		p[0].type="while"
 	elif(p[1]=="if"):
+		alabel=st.afterlabel()
+		elabel=st.elselabel()
 		p[0]=Node()
 		p[0].code += p[2].code
 		if(p[5]):
 			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+p[5].label+" \n"]
 		else:
-			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+st.elselabel()+" \n"]
+			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+elabel+" \n"]
 		p[0].code += p[4].code
-		p[0].code += ["goto, "+st.afterlabel()+"\n"]
+		p[0].code += ["goto, "+alabel+"\n"]
 		if(p[5]):
 			p[0].code += p[5].code
-		p[0].code += [st.elselabel()+": \n"]
+		p[0].code += [elabel+": \n"]
 		if(p[6]):
 			p[0].code += p[6].code
-		p[0].code += [st.afterlabel()+": \n"]
+		p[0].code += [alabel+": \n"]
 	elif(p[1]=="for"):
 		lab1 = st.newlabel()
 		p[0]=Node()
 		if(not st.lookup(p[2])):
-				st.insert(p[2].place)
+				print "inserted ",p[2].place
+				st.insert(p[2].place,p[4].type)
 		try:
 			int(p[4].place)
 		except:
@@ -333,6 +362,7 @@ def p_primary(p):
 		p[0].code += p[6].code
 		p[0].code += ["+, ",p[2].place+", "+p[2].place+", 1\n"]
 		p[0].code += ["ifgoto, leq, "+ p[2].place+ ", "+p[4].place2+", "+lab1+" \n"]
+		p[0].code="for"
 	elif(p[1]=="("):
 		p[0]=p[2]
 
@@ -402,6 +432,7 @@ def p_lhs(p):
 	if(len(p)==2):
 		p[0]=p[1]
 		p[0].place = p[1].place
+
 	# print "check: lhs", p[0].code
 
 def p_mrhs(p):
@@ -495,6 +526,11 @@ def p_literal(p):
 			   | STRING'''
 	p[0]=Node()
 	p[0].place=p[1]
+	print "literal, ",p[1],"type ",type(p[1])
+	p[0].type=type(p[1])
+	if(p[0].type=="string"):
+		print "yess"
+		p[0].place=str('\''+p[1]+'\'')
 
 def p_op_asgn(p):
 	'''op_asgn : PLUS_EQ
@@ -537,9 +573,16 @@ def p_variable(p):
 	if(len(p)==2):
 		p[0]=Node()
 		p[0].place=p[1]
+		p[0].type="variable"
+		if(st.lookup(p[1])):
+			p[0].type=st.gettype(p[1])
 	else:
 		p[0]=Node()
 		p[0].place=str(p[1])+str(p[2])
+		p[0].type="variable"
+		if(st.lookup(p[2])):
+			p[0].type=st.gettype(p[2])
+	# print "type of from variabl",p[0].place,p[0].type
 	
 
 def p_none(p):
