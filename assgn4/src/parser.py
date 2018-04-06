@@ -41,42 +41,93 @@ precedence = (
     ('left', 'PLUS', 'MINUS'),
     ('left', 'MULTIPLY', 'DIVIDE','REMAINDER'),
 )
+temps=0
+labels=0
+elabels=0
+alabels=0
+argno = 0
+def newtemp(st,typeof):
+    global temps
+    temps = temps + 1
+    name = "temp"+str(temps)
+    st.insert(name, typeof)
+    return name
 
+def newlabel():
+    global labels
+    labels = labels + 1
+    name = "label"+str(labels)
+    return name
 
-# def printfinal(tree,counter):
-# 	global body
-# 	allLeaves = True
-# 	if (type(tree) == None):
-# 		return tree
-# 	else:
-# 		for i in range(1,len(tree)):
-# 			if(isinstance(tree[i], types.StringTypes) == True):
-# 				if "#" in tree[i]:
-# 					tree[i] = tree[i][:-1]
-# 					body = body + "<b>" + " " + tree[i] + "</b>"
-# 				else:
-# 					body = body + " " + tree[i]
-# 			else:
-# 				tree[i] = printfinal(tree[i], (allLeaves and counter))
-# 				allLeaves = False
-# 		if(allLeaves == True and counter == True):
-# 			tree = tree[0]+"#"
-# 		return tree
+def elselabel():
+    global elabels
+    elabels = elabels + 1
+    name = "elselabel"+str(elabels)
+    return name
 
-# def printRightDeriv(tree):
-# 	global body
-# 	while(isinstance(tree, types.StringTypes) == False):
-# 		tree = printfinal(tree,True)
-# 		print body + "<br>"
-# 		body = ""
-# 	print "<b>" + tree[:-1] + "</b>" + "<br>"
+def afterlabel():
+    global alabels
+    alabels = alabels + 1
+    name = "afterlabel"+str(alabels)
+    return name
+
+def getelabel():
+	global elabels
+	name = "elselabel"+str(elabels)
+	return name
+
+def getalabel():
+	global alabels
+	name = "afterlabel"+str(alabels)
+	return name
+
+allscopes={}
+total_scopes=0
+curr_scope=0
+scope_stack=[]
+scope_stack_copy=[]
+scope_stack.append(curr_scope)
+allscopes[curr_scope]=sym_table.Symtable()
+
+def newscope():
+	global allscopes
+	global curr_scope
+	global total_scopes
+	total_scopes=total_scopes+1
+	parent=curr_scope
+	curr_scope = total_scopes
+	scope_stack.append(curr_scope)
+	allscopes[curr_scope]=sym_table.Symtable()
+	allscopes[curr_scope].parent=parent
+
+def delscope():
+	global curr_scope
+	scope_stack.pop()
+	curr_scope=scope_stack[-1]
+
+def global_lookup(var):
+	for sc in reversed(scope_stack):
+		if var in allscopes[sc].table.keys():
+			return allscopes[sc].table[var]
+	return None
+
+def global_gettype(var):
+	for sc in reversed(scope_stack):
+		if var in allscopes[sc].table.keys():
+			return allscopes[sc].table[var]["type"]
+	return None
 
 def printfinal(node):
 	print
 	print
 	print ''.join(node.code)
 	print
-	print st.table
+	global total_scopes
+	print total_scopes
+	for curr_scope in range(0,total_scopes):
+		print curr_scope
+		print allscopes[curr_scope].table
+		print
 
 class Node:
 	def __init__(self):
@@ -87,7 +138,7 @@ class Node:
 		self.label=""
 		# self.next=None
 
-st = sym_table.Symtable()
+
 
 def p_program(p):
 	'''program : compstmt'''
@@ -108,6 +159,11 @@ def p_stmts(p):
 	if(len(p)==4):
 		p[0]=p[1]
 		# print "checks of error",p[0].code, p[2].code, p[3].code 
+		print "yo check this shit out"
+		print p[1].code
+		print p[2].code
+		print p[3].code
+		# p[0].code=[p[0].code]
 		p[0].code += p[2].code + p[3].code
 	else:
 		p[0]=p[1]
@@ -138,7 +194,11 @@ def p_expr(p):
 			| args'''
 	if(len(p)==2):
 		p[0]=p[1]
-		# print "check:expr",p[0].code
+	elif(p[1]=="return"):
+		print "did return"
+		p[0]=Node()
+		p[0].code += "return"
+		p[0].code += p[2].code
 
 def p_call(p):
 	'''call : function
@@ -152,13 +212,16 @@ def p_command(p):
 		p[0].append(p[i])
  	
 def p_function(p):
-	'''function : variable LPARENTHESIS call_args RPARENTHESIS
-				| primary DOT variable LPARENTHESIS call_args RPARENTHESIS
+	'''function : variable LPARENTHESIS fcall_args RPARENTHESIS
+				| primary DOT variable LPARENTHESIS fcall_args RPARENTHESIS
 				| primary DOT variable
 				| primary DOUBLECOLON variable'''
-	p[0]=["function"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+	print "yo failed fucntion"
+	if(len(p)==5):
+		p[0]=Node()
+		p[0].code += ["call, "+p[1].place+"\n"]
+		p[0].code += p[3].code
+
 
 def p_arg(p):
 	'''arg : lhs EQUAL arg
@@ -196,49 +259,50 @@ def p_arg(p):
 			p[0]=Node()
 			p[0].place=p[1].place
 			p[0].place2=p[3].place
-			print p[0]
+			print "from double dot",p[0]
 		elif(p[2] in ['+','-','/','*','%','^','|','<<','>>','&','&&','||',"<=","<",">=",">","==","!="]):
 			print "latest check,",p[1],p[1].code,p[1].type,p[1].place
 			if(p[1].type):
-				temp = st.newtemp(p[1].type)
+				temp = newtemp(allscopes[curr_scope], p[1].type)
 			else:
-				temp = st.newtemp(st.gettype(p[1]))	
+				temp = newtemp(allscopes[curr_scope], global_gettype(p[1]))	
 			# print "check arg p1 ",p[1].code
 			# print "check arg p3 ",p[3].code
 			p[0]=Node()
 			p[0].code = p[1].code + p[3].code
 			p[0].place = temp
 			p[0].type=p[1].type
-			# if(not st.lookup(p[1].place)):
-			# 	print "error. variable, "+ p[1].place +" value not assigned before"
-			# 	sys.exit()
-			# if(not st.lookup(p[3].place)):
-			# 	print "error. variable, "+ p[3].place +" value not assigned before"
-			# 	sys.exit()
+			print "checking ", p[3].place
+			if(p[3].type=="variable" and (not global_lookup(p[3].place))):
+				print "error. variable, "+ p[3].place +" value not assigned before from 1"
+				sys.exit()
+			print "checking ", p[1].place
+			if(p[1].type=="variable" and (not global_lookup(p[1].place))):
+				print allscopes[curr_scope].table
+				print "error. variable, "+ p[1].place +" value not assigned before from 2"
+				sys.exit()
 			if(p[2] in ["<=","<",">=",">","==","!="]):
 				# print "did the big stuff"
-				lab1 = st.newlabel()
-				lab2 = st.newlabel()
+				lab1 = newlabel()
+				lab2 = newlabel()
 				p[0].code += ["ifgoto, ",relop[p[2]]+", "+p[1].place+", "+p[3].place+", "+lab1+" \n"]
 				p[0].code += ["=, "+p[0].place+", 0 \n"]
 				p[0].code += ["goto, "+lab2+" \n"]
-				p[0].code += [lab1+": \n"]
+				p[0].code += ["label, "+lab1+"\n"]
 				p[0].code += ["=, "+p[0].place+", 1 \n"]
-				p[0].code += [lab2+": \n"]
+				p[0].code += ["label, "+lab2+"\n"]
 			else:	
 				p[0].code += [p[2]+", "+p[0].place+", "+p[1].place+", "+p[3].place+" \n"]
 		elif(p[2]=='='):
 			p[0]=Node()
 			print "updating type of",p[1].place,p[3].type
 			p[1].type = p[3].type
-			if(not st.lookup(p[1])):
-				print "type insertion is", p[3].type, "for ",p[1].place
-				st.insert(p[1].place,p[3].type)
 			try:
 				float(p[3].place)
 			except:
-				if(p[3].type == "variable" and (not st.lookup(p[3].place))):
-					print "error. variable, "+ p[3].place +" value not assigned before"
+				print "checking",p[3].place
+				if(p[3].type == "variable" and (not global_lookup(p[3].place))):
+					print "error. variable, "+ p[3].place +" value not assigned before from 3"
 					sys.exit()
 			# print "check arg p1 ",p[1].code
 			# print "check arg p3 ",p[3].code
@@ -246,36 +310,40 @@ def p_arg(p):
 			p[0].code = p[1].code + p[3].code
 			p[0].code += [p[2]+", "+p[1].place+", "+p[3].place+" \n"]
 			p[0].type = p[3].type
+			if(not allscopes[curr_scope].lookup(p[1])):
+				print "type insertion is", p[3].type, "for ",p[1].place
+				allscopes[curr_scope].insert(p[1].place,p[3].type)
 	elif(len(p)==2):
+		print "---------------------",p[1]
 		p[0] = p[1]
 		print "type of arg", p[0].place, p[0].type
 	elif(len(p)==3):
-		temp = st.newtemp("bool")
+		temp = newtemp(allscopes[curr_scope],"bool")
 		p[0]=Node()
 		p[0].place=temp
-		if(not st.lookup(p[2].place)):
-				print "error. variable, "+ p[2].place +" value not assigned before"
+		if(not global_lookup(p[2].place)):
+				print "error. variable, "+ p[2].place +" value not assigned before from 4"
 				sys.exit()
 		p[0].code += ["not, "+p[0].place+", "+p[2].place+" \n"]
 		p[0].type = "bool"
 	# print "check: arg", ''.join(p[0].code)
 
 def p_opt_elsifstmt(p):
-	'''opt_elsifstmt : ELSIF expr then compstmt opt_elsifstmt
+	'''opt_elsifstmt : ELSIF expr then nscope compstmt escope opt_elsifstmt
 					 | none'''
 	if(len(p)==6):
 		lab1=st.newlabel()
 		p[0]=Node()
 		p[0].label=lab1
-		p[0].code += [p[0].label,": \n"]
+		p[0].code += ["label, "+p[0].label,"\n"]
 		p[0].code += p[2].code
 		p[0].type="elifcode"
 		if(p[5]):
 			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+p[5].label+" \n"]
 		else:
-			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+st.getelabel()+" \n"]
+			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+getelabel()+" \n"]
 		p[0].code += p[4].code
-		p[0].code += ["goto, "+st.getalabel()+"\n"]
+		p[0].code += ["goto, "+getalabel()+"\n"]
 		if(p[5]):
 			p[0].code += p[5].code
 		print "check from elsif:",p[0].code
@@ -285,12 +353,46 @@ def p_opt_elsifstmt(p):
 
 
 def p_opt_elsestmt(p):
-	'''opt_elsestmt : ELSE compstmt
+	'''opt_elsestmt : ELSE nscope compstmt escope
 					| none'''
 	if(len(p)==3):	
 		p[0]=p[2]
 		print "check from else: ",p[0].code
 
+
+def p_nscope(p):
+	'''nscope : none'''
+	print "started new scope"
+	p[0]=p[1]
+	newscope()
+
+def p_escope(p):
+	'''escope : none'''
+	print "end new scope"
+	p[0]=p[1]
+	delscope()
+
+def p_nfscope(p):
+	'''nfscope : none'''
+	global scope_stack_copy
+	global scope_stack
+	print "started new function scope"
+	print scope_stack
+	scope_stack_copy = scope_stack
+	scope_stack=[]
+	p[0]=p[1]
+	newscope()
+
+def p_efscope(p):
+	'''efscope : none'''
+	global scope_stack_copy
+	global scope_stack
+	scope_stack=scope_stack_copy
+	scope_stack_copy=[]
+	print "end new fu*nction scope"
+	print scope_stack
+	p[0]=p[1]
+	# delscope()
 
 def p_primary(p):
 	'''primary : LPARENTHESIS compstmt RPARENTHESIS
@@ -302,24 +404,28 @@ def p_primary(p):
 				 | RETURN 
 				 | RETURN LPARENTHESIS call_args RPARENTHESIS
 				 | function
-				 | IF expr then compstmt opt_elsifstmt opt_elsestmt END
+				 | IF expr then nscope compstmt escope opt_elsifstmt opt_elsestmt  END
 				 | UNLESS expr then compstmt opt_elsestmt END
 				 | WHILE expr do compstmt END
 				 | UNTIL expr do compstmt END
 				 | CASE compstmt WHEN when_args then compstmt opt_when_args opt_elsestmt END
-				 | FOR block_var IN expr do compstmt END
+				 | FOR nscope block_var IN expr do compstmt escope END
 				 | BEGIN compstmt END
 				 | CLASS variable terminals compstmt END
-				 | DEF fname argdecl compstmt END'''
+				 | DEF fname nfscope argdecl compstmt efscope END'''
 	if(len(p)==2):
 		if(p[1]!='return'):
+			print p[1]
 			p[0]=p[1]
 			p[0].place = p[1].place
 			p[0].type = p[1].type
 			print "typye in primary of ",p[0].place, p[0].type
+		else:
+			p[0]=Node()
+			p[0].code=[p[1]+"\n"]
 	elif(p[1]=="while"):
-		lab1 = st.newlabel()
-		lab2 = st.newlabel()
+		lab1 = newlabel()
+		lab2 = newlabel()
 		p[0]=Node()
 		p[0].code += [lab1+": \n"]
 		p[0].code += p[2].code
@@ -329,8 +435,8 @@ def p_primary(p):
 		p[0].code += [lab2+": \n"]
 		p[0].type="while"
 	elif(p[1]=="if"):
-		alabel=st.afterlabel()
-		elabel=st.elselabel()
+		alabel=afterlabel()
+		elabel=elselabel()
 		p[0]=Node()
 		p[0].code += p[2].code
 		if(p[5]):
@@ -346,25 +452,30 @@ def p_primary(p):
 			p[0].code += p[6].code
 		p[0].code += [alabel+": \n"]
 	elif(p[1]=="for"):
-		lab1 = st.newlabel()
+		lab1 = newlabel()
 		p[0]=Node()
-		if(not st.lookup(p[2])):
-				print "inserted ",p[2].place
-				st.insert(p[2].place,p[4].type)
+		print "inserted ",p[3].place
+		allscopes[curr_scope].insert(p[3].place,p[5].type)
 		try:
-			int(p[4].place)
+			float(p[5].place)
 		except:
-			if(not st.lookup(p[4].place)):
-				print "error. variable, "+ p[4].place +" value not assigned before"
+			if(not global_lookup(p[5].place)):
+				print "error. variable, "+ p[5].place +" value not assigned before from 5"
 				sys.exit()
-		p[0].code += ["=, "+p[2].place+", "+p[4].place+" \n"]
-		p[0].code += [lab1+": \n"]
-		p[0].code += p[6].code
-		p[0].code += ["+, ",p[2].place+", "+p[2].place+", 1\n"]
-		p[0].code += ["ifgoto, leq, "+ p[2].place+ ", "+p[4].place2+", "+lab1+" \n"]
-		p[0].code="for"
+		p[0].code += ["=, "+p[3].place+", "+p[5].place+" \n"]
+		p[0].code += ["label, "+lab1+"\n"]
+		p[0].code += p[7].code
+		p[0].code += ["+, ",p[3].place+", "+p[3].place+", 1\n"]
+		p[0].code += ["ifgoto, leq, "+ p[3].place+ ", "+p[5].place2+", "+lab1+" \n"]
+		p[0].type="for"
 	elif(p[1]=="("):
 		p[0]=p[2]
+	elif(p[1]=="def"):
+		p[0]=Node()
+		p[0].code += ["label, "+p[2].place+"\n"]
+		if(p[4]):
+			p[0].code += p[4].code
+		p[0].code += p[5].code
 
 def p_opt_when_args(p):
 	'''opt_when_args  : WHEN when_args then compstmt opt_when_args
@@ -470,11 +581,26 @@ def p_call_args(p):
 				 | arg
 				 | command
 				 | none'''
-	p[0]=["call_args"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+	p[0]=Node()
+	if(p[1]!="*" and p[i]!="&"):
+		if(len(p)==2):
+			p[0].code += [p[1].place]
+		else:
+			p[0].code += p[1].code+[", "]+p[3].code
 
-
+def p_fcall_args(p):
+	'''fcall_args : fcall_args COMMA fcall_args
+				 | MULTIPLY arg
+				 | BINARY_AND arg
+				 | arg
+				 | command
+				 | none'''
+	p[0]=Node()
+	if(p[1]!="*" and p[1]!="&"):
+		if(len(p)==2 and p[1].place):
+			p[0].code += ["push, "+p[1].place+"\n"]
+		elif(len(p)==4):
+			p[0].code += p[1].code+p[3].code	
 
 def p_opt_args(p):
 	'''opt_args : args
@@ -491,34 +617,37 @@ def p_args(p):
 def p_argdecl(p):
 	'''argdecl : LPARENTHESIS arglist RPARENTHESIS opt_terminals
 			   | arglist terminals'''
-	p[0]=["argdecl"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+	if(p[1]=='('):
+		p[0]=p[2]
 
 def p_opt_variables(p):
 	'''opt_variables : COMMA variable opt_variables
 			   | COMMA MULTIPLY variable opt_variables
 			   | COMMA BINARY_AND variable opt_variables
 			   | none'''
-	p[0]=["opt_variables"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+	global argno
+	if(len(p)==4):
+		argno += 1
+		p[0]=p[2]
+		p[0].code += ["load, arg"+argno+", "+p[2].place+"\n"]
+		p[0].code += p[3].code
+		allscopes[curr_scope].insert(p[2].place)
+	elif(len(p)==2):
+		argno = 0
 
 def p_arglist(p):
 	'''arglist : variable opt_variables
 			   | MULTIPLY variable opt_variables
 			   | BINARY_AND variable opt_variables
 			   | none'''
-	p[0]=["arglist"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
-
-
-# def p_variable(p):
-# 	'''variable : varname'''
-# 	p[0]=["variable"]
-# 	for i in range(1,len(p)):
-# 		p[0].append(p[i])
+	if(len(p)==3):
+		global argno
+		argno += 1
+		p[0]=p[1]
+		p[0].code += ["load, arg"+str(argno)+", "+p[1].place+"\n"]
+		if(p[2]):
+			p[0].code += p[2].code
+		allscopes[curr_scope].insert(p[1].place,p[1].type)
 
 def p_literal(p):
 	'''literal : INTNUMBER
@@ -574,21 +703,21 @@ def p_variable(p):
 		p[0]=Node()
 		p[0].place=p[1]
 		p[0].type="variable"
-		if(st.lookup(p[1])):
-			p[0].type=st.gettype(p[1])
+		if(global_lookup(p[1])):
+			print "found type of", p[1]
+			p[0].type=global_gettype(p[1])
 	else:
 		p[0]=Node()
 		p[0].place=str(p[1])+str(p[2])
 		p[0].type="variable"
-		if(st.lookup(p[2])):
-			p[0].type=st.gettype(p[2])
+		if(global_lookup(p[2])):
+			p[0].type=global_gettype(p[2])
 	# print "type of from variabl",p[0].place,p[0].type
 	
 
 def p_none(p):
 	'''none :'''
 	p[0]=Node()
-
 
 def p_terminals(p):
 	'''terminals : SEMICOLON
