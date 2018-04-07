@@ -89,7 +89,7 @@ scope_stack_copy=[]
 scope_stack.append(curr_scope)
 allscopes[curr_scope]=sym_table.Symtable()
 
-def newscope():
+def newscope(name=None):
 	global allscopes
 	global curr_scope
 	global total_scopes
@@ -97,8 +97,9 @@ def newscope():
 	parent=curr_scope
 	curr_scope = total_scopes
 	scope_stack.append(curr_scope)
-	allscopes[curr_scope]=sym_table.Symtable()
+	allscopes[curr_scope]=sym_table.Symtable(name)
 	allscopes[curr_scope].parent=parent
+	allscopes[parent].children.append(curr_scope)
 
 def delscope():
 	global curr_scope
@@ -123,8 +124,8 @@ def printfinal(node):
 	print ''.join(node.code)
 	print
 	global total_scopes
-	print total_scopes
-	for curr_scope in range(0,total_scopes):
+	print "total",total_scopes
+	for curr_scope in range(0,total_scopes+1):
 		print curr_scope
 		print allscopes[curr_scope].table
 		print
@@ -197,8 +198,12 @@ def p_expr(p):
 	elif(p[1]=="return"):
 		print "did return"
 		p[0]=Node()
-		p[0].code += "return"
-		p[0].code += p[2].code
+		if(p[2].code):
+			p[0].code += "retint"
+			p[0].code+=[", "]
+			p[0].code += p[2].code+["\n"]
+		else:
+			p[0].code += "retvoid \n"
 
 def p_call(p):
 	'''call : function
@@ -249,6 +254,8 @@ def p_arg(p):
 		   | arg BINARY_RSHIFT arg
 		   | arg LOGICAL_AND arg
 		   | arg LOGICAL_OR arg
+		   | ARRAY DOT NEW LPARENTHESIS variable RPARENTHESIS
+		   | ARRAY DOT NEW LPARENTHESIS INTNUMBER RPARENTHESIS
 		   | primary'''
 	checkcount=1
 	# print checkcount
@@ -295,24 +302,33 @@ def p_arg(p):
 				p[0].code += [p[2]+", "+p[0].place+", "+p[1].place+", "+p[3].place+" \n"]
 		elif(p[2]=='='):
 			p[0]=Node()
-			print "updating type of",p[1].place,p[3].type
-			p[1].type = p[3].type
-			try:
-				float(p[3].place)
-			except:
-				print "checking",p[3].place
-				if(p[3].type == "variable" and (not global_lookup(p[3].place))):
-					print "error. variable, "+ p[3].place +" value not assigned before from 3"
-					sys.exit()
-			# print "check arg p1 ",p[1].code
-			# print "check arg p3 ",p[3].code
-			# print "concatenating", ''.join([p[2]]+[", "]+[p[1].place]+[", "]+[p[3].place])
-			p[0].code = p[1].code + p[3].code
-			p[0].code += [p[2]+", "+p[1].place+", "+p[3].place+" \n"]
-			p[0].type = p[3].type
-			if(not allscopes[curr_scope].lookup(p[1])):
-				print "type insertion is", p[3].type, "for ",p[1].place
-				allscopes[curr_scope].insert(p[1].place,p[3].type)
+			if(p[3].type!="array"):
+				print "updating type of",p[1].place,p[3].type
+				p[1].type = p[3].type
+				try:
+					float(p[3].place)
+				except:
+					print "checking",p[3].place
+					if(p[3].type == "variable" and (not global_lookup(p[3].place))):
+						print "error. variable, "+ p[3].place +" value not assigned before from 3"
+						sys.exit()
+				# print "check arg p1 ",p[1].code
+				# print "check arg p3 ",p[3].code
+				# print "concatenating", ''.join([p[2]]+[", "]+[p[1].place]+[", "]+[p[3].place])
+				p[0].code = p[1].code + p[3].code
+				p[0].code += [p[2]+", "+p[1].place+", "+p[3].place+" \n"]
+				p[0].type = p[3].type
+				if(not allscopes[curr_scope].lookup(p[1])):
+					print "type insertion is", p[3].type, "for ",p[1].place
+					allscopes[curr_scope].insert(p[1].place,p[3].type)
+			else:
+				p[1].type="array"
+				p[0].code = p[1].code
+				p[0].code = ["array, "+p[1].place+"\n"]
+				p[0].type = p[3].type
+				if(not allscopes[curr_scope].lookup(p[1])):
+					print "type insertion is", p[3].type, "for ",p[1].place
+					allscopes[curr_scope].insert(p[1].place,p[3].type)
 	elif(len(p)==2):
 		print "---------------------",p[1]
 		p[0] = p[1]
@@ -326,6 +342,15 @@ def p_arg(p):
 				sys.exit()
 		p[0].code += ["not, "+p[0].place+", "+p[2].place+" \n"]
 		p[0].type = "bool"
+	elif(p[1]=="array"):
+		p[0]=Node()
+		p[0].type="array"
+		try:
+			float(p[5])
+			p[0].code = [str(p[5])]
+		except:
+			p[0].code = [p[5].place]
+
 	# print "check: arg", ''.join(p[0].code)
 
 def p_opt_elsifstmt(p):
@@ -381,17 +406,19 @@ def p_nfscope(p):
 	scope_stack_copy = scope_stack
 	scope_stack=[]
 	p[0]=p[1]
-	newscope()
+	newscope(p[-1])
 
 def p_efscope(p):
 	'''efscope : none'''
 	global scope_stack_copy
 	global scope_stack
+	global curr_scope
 	scope_stack=scope_stack_copy
 	scope_stack_copy=[]
 	print "end new fu*nction scope"
 	print scope_stack
 	p[0]=p[1]
+	curr_scope=scope_stack[-1]
 	# delscope()
 
 def p_primary(p):
@@ -422,7 +449,7 @@ def p_primary(p):
 			print "typye in primary of ",p[0].place, p[0].type
 		else:
 			p[0]=Node()
-			p[0].code=[p[1]+"\n"]
+			p[0].code=["retvoid\n"]
 	elif(p[1]=="while"):
 		lab1 = newlabel()
 		lab2 = newlabel()
@@ -539,10 +566,25 @@ def p_mlhs_item(p):
 def p_lhs(p):
 	'''lhs : variable
 	       | primary DOT variable
+	       | variable LBRACKET variable RBRACKET
+	       | variable LBRACKET INTNUMBER RBRACKET
 	       | NIL'''
 	if(len(p)==2):
 		p[0]=p[1]
 		p[0].place = p[1].place
+	elif(len(p)==5):
+		p[0]=Node()
+		try:
+			int(p[3])
+			p[0].place=p[1].place+"["+p[3]+"]"
+			t=newtemp(allscopes[curr_scope],"pointer")
+			p[0].code = ["+, "+t+", "+p[1].place+", "+p[3]+"\n"]
+			p[0].code += ["*, "+t+"\n"]
+		except:
+			p[0].place=p[1].place+"["+p[3].place+"]"
+			t=newtemp(allscopes[curr_scope],"pointer")
+			p[0].code = ["+, "+t+", "+p[1].place+", "+p[3].place]
+			p[0].code += ["*, "+t]
 
 	# print "check: lhs", p[0].code
 
@@ -582,7 +624,7 @@ def p_call_args(p):
 				 | command
 				 | none'''
 	p[0]=Node()
-	if(p[1]!="*" and p[i]!="&"):
+	if(p[1]!="*" and p[1]!="&"):
 		if(len(p)==2):
 			p[0].code += [p[1].place]
 		else:

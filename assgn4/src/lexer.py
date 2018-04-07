@@ -27,7 +27,9 @@ reserved = {
    'unless' : 'UNLESS',
    'until' : 'UNTIL',
    'when' : 'WHEN',
-   'while' : 'WHILE'
+   'while' : 'WHILE',
+   'array' : 'ARRAY',
+   'new' : 'NEW'
 }
 
 arithmetic = [
