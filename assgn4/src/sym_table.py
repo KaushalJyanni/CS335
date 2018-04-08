@@ -1,3 +1,4 @@
+#!/usr/bin/python2
 class Symtable:
 
     def __init__(self,name=None):
@@ -19,7 +20,7 @@ class Symtable:
             return None
 
     def insert(self, var, typeof):
-        print "************************8888",typeof
+        # print "************************8888",typeof
         self.table[var] = {}
         self.table[var]["type"] = str(typeof)
         # print "yolooooooooooooooo", self.table['a']["type"]

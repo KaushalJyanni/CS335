@@ -587,7 +587,8 @@ def p_when_args(p):
 		p[0].code = p[1].place
 	else:
 		p[0]=Node()
-		p[0].code = [p[1].place+", "]+p[3].code
+		# print p[3].code
+		p[0].code = [p[1].place+", "]+list(p[3].code)
 
 def p_then(p):
 	'''then : terminals
