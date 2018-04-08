@@ -1,8 +1,10 @@
 class Symtable:
 
-    def __init__(self):
+    def __init__(self,name=None):
+        self.name=name
         self.table={}
         self.parent=None
+        self.children=[]
 
     def lookup(self, var):
         if var in self.table.keys():

@@ -46,6 +46,8 @@ labels=0
 elabels=0
 alabels=0
 argno = 0
+switchtemp="stemp"
+slabel=0
 def newtemp(st,typeof):
     global temps
     temps = temps + 1
@@ -100,8 +102,10 @@ def newscope(name=None):
 	allscopes[curr_scope]=sym_table.Symtable(name)
 	allscopes[curr_scope].parent=parent
 	allscopes[parent].children.append(curr_scope)
+	print "incremented curr_scope to ", curr_scope
 
 def delscope():
+	print "deleting scope"
 	global curr_scope
 	scope_stack.pop()
 	curr_scope=scope_stack[-1]
@@ -124,7 +128,7 @@ def printfinal(node):
 	print ''.join(node.code)
 	print
 	global total_scopes
-	print "total",total_scopes
+	print "total",total_scopes+1
 	for curr_scope in range(0,total_scopes+1):
 		print curr_scope
 		print allscopes[curr_scope].table
@@ -144,6 +148,7 @@ class Node:
 def p_program(p):
 	'''program : compstmt'''
 	p[0] = p[1]
+	print "final code"
 	printfinal(p[0])
 
 def p_compstmt(p):
@@ -160,10 +165,10 @@ def p_stmts(p):
 	if(len(p)==4):
 		p[0]=p[1]
 		# print "checks of error",p[0].code, p[2].code, p[3].code 
-		print "yo check this shit out"
-		print p[1].code
-		print p[2].code
-		print p[3].code
+		# print "yo check this shit out"
+		# print p[1].code
+		# print p[2].code
+		# print p[3].code
 		# p[0].code=[p[0].code]
 		p[0].code += p[2].code + p[3].code
 	else:
@@ -221,11 +226,11 @@ def p_function(p):
 				| primary DOT variable LPARENTHESIS fcall_args RPARENTHESIS
 				| primary DOT variable
 				| primary DOUBLECOLON variable'''
-	print "yo failed fucntion"
 	if(len(p)==5):
 		p[0]=Node()
-		p[0].code += ["call, "+p[1].place+"\n"]
 		p[0].code += p[3].code
+		p[0].code += ["call, "+p[1].place+"\n"]
+
 
 
 def p_arg(p):
@@ -256,16 +261,20 @@ def p_arg(p):
 		   | arg LOGICAL_OR arg
 		   | ARRAY DOT NEW LPARENTHESIS variable RPARENTHESIS
 		   | ARRAY DOT NEW LPARENTHESIS INTNUMBER RPARENTHESIS
+		   | variable LBRACKET variable RBRACKET
+	       | variable LBRACKET INTNUMBER RBRACKET
 		   | primary'''
 	checkcount=1
 	# print checkcount
 	checkcount += 1
+	global curr_scope
 	if(len(p)==4):
 		if(p[2]==".."):
 			# print "doule dot niggers *******************8"
 			p[0]=Node()
 			p[0].place=p[1].place
 			p[0].place2=p[3].place
+			p[0].type=p[1].type
 			print "from double dot",p[0]
 		elif(p[2] in ['+','-','/','*','%','^','|','<<','>>','&','&&','||',"<=","<",">=",">","==","!="]):
 			print "latest check,",p[1],p[1].code,p[1].type,p[1].place
@@ -316,7 +325,7 @@ def p_arg(p):
 				# print "check arg p3 ",p[3].code
 				# print "concatenating", ''.join([p[2]]+[", "]+[p[1].place]+[", "]+[p[3].place])
 				p[0].code = p[1].code + p[3].code
-				p[0].code += [p[2]+", "+p[1].place+", "+p[3].place+" \n"]
+				p[0].code += ["=, "+p[1].place+", "+p[3].place+" \n"]
 				p[0].type = p[3].type
 				if(not allscopes[curr_scope].lookup(p[1])):
 					print "type insertion is", p[3].type, "for ",p[1].place
@@ -350,27 +359,41 @@ def p_arg(p):
 			p[0].code = [str(p[5])]
 		except:
 			p[0].code = [p[5].place]
+	elif(len(p)==5):
+		p[0]=Node()
+		p[0].type="pointer"
+		try:
+			int(p[3])
+			t=newtemp(allscopes[curr_scope],"pointer")
+			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3]+" \n"]
+			p[0].code += ["*, "+t+" \n"]
+			p[0].place=t
+		except:
+			t=newtemp(allscopes[curr_scope],"pointer")
+			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3].place+"\n"]
+			p[0].code += ["*, "+t+"\n"]
+			p[0].place=t
 
 	# print "check: arg", ''.join(p[0].code)
 
 def p_opt_elsifstmt(p):
 	'''opt_elsifstmt : ELSIF expr then nscope compstmt escope opt_elsifstmt
 					 | none'''
-	if(len(p)==6):
+	if(len(p)==8):
 		lab1=st.newlabel()
 		p[0]=Node()
 		p[0].label=lab1
 		p[0].code += ["label, "+p[0].label,"\n"]
 		p[0].code += p[2].code
 		p[0].type="elifcode"
-		if(p[5]):
-			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+p[5].label+" \n"]
+		if(p[7]):
+			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+p[7].label+" \n"]
 		else:
 			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+getelabel()+" \n"]
-		p[0].code += p[4].code
+		p[0].code += p[5].code
 		p[0].code += ["goto, "+getalabel()+"\n"]
-		if(p[5]):
-			p[0].code += p[5].code
+		if(p[7]):
+			p[0].code += p[7].code
 		print "check from elsif:",p[0].code
 	else:
 		p[0]=None
@@ -380,21 +403,19 @@ def p_opt_elsifstmt(p):
 def p_opt_elsestmt(p):
 	'''opt_elsestmt : ELSE nscope compstmt escope
 					| none'''
-	if(len(p)==3):	
-		p[0]=p[2]
+	if(len(p)==5):	
+		p[0]=p[3]
 		print "check from else: ",p[0].code
 
 
 def p_nscope(p):
-	'''nscope : none'''
-	print "started new scope"
-	p[0]=p[1]
+	'''nscope : '''
 	newscope()
+	print "started new scope"
 
 def p_escope(p):
-	'''escope : none'''
+	'''escope : '''
 	print "end new scope"
-	p[0]=p[1]
 	delscope()
 
 def p_nfscope(p):
@@ -436,10 +457,11 @@ def p_primary(p):
 				 | WHILE expr do compstmt END
 				 | UNTIL expr do compstmt END
 				 | CASE compstmt WHEN when_args then compstmt opt_when_args opt_elsestmt END
-				 | FOR nscope block_var IN expr do compstmt escope END
+				 | nscope FOR block_var IN expr do compstmt escope END
 				 | BEGIN compstmt END
 				 | CLASS variable terminals compstmt END
 				 | DEF fname nfscope argdecl compstmt efscope END'''
+	global curr_scope
 	if(len(p)==2):
 		if(p[1]!='return'):
 			print p[1]
@@ -466,23 +488,25 @@ def p_primary(p):
 		elabel=elselabel()
 		p[0]=Node()
 		p[0].code += p[2].code
-		if(p[5]):
-			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+p[5].label+" \n"]
+		if(p[7]):
+			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+p[7].label+" \n"]
 		else:
 			p[0].code += ["ifgoto, eq, "+ p[2].place+ ", 0, "+elabel+" \n"]
-		p[0].code += p[4].code
+		p[0].code += p[5].code
 		p[0].code += ["goto, "+alabel+"\n"]
-		if(p[5]):
-			p[0].code += p[5].code
-		p[0].code += [elabel+": \n"]
-		if(p[6]):
-			p[0].code += p[6].code
-		p[0].code += [alabel+": \n"]
-	elif(p[1]=="for"):
+		if(p[7]):
+			p[0].code += p[7].code
+		p[0].code += ["label, "+elabel+" \n"]
+		if(p[8]):
+			p[0].code += p[8].code
+		p[0].code += ["label, "+alabel+" \n"]
+	elif(p[2]=="for"):
 		lab1 = newlabel()
 		p[0]=Node()
-		print "inserted ",p[3].place
-		allscopes[curr_scope].insert(p[3].place,p[5].type)
+		# print "inserted ",p[3].place
+		# print "&&&&& currscope is", curr_scope
+		# x=global_lookup(p[3].place)
+		# x["type"]=p[5].type
 		try:
 			float(p[5].place)
 		except:
@@ -503,27 +527,65 @@ def p_primary(p):
 		if(p[4]):
 			p[0].code += p[4].code
 		p[0].code += p[5].code
+	elif(p[1]=="case"):
+		p[0]=Node()
+		# temp=newtemp(allscopes[curr_scope],"case")
+		# global switchtemp
+		global slabel
+		slabel = slabel + 1
+		# switchtemp=temp
+		p[0].code=p[2].code
+		p[0].code+=["=, "+switchtemp+","+p[2].place+"\n"]
+		# p[0].code+=p[4].code
+		print "fuckkk"
+		print p[2].place
+		p[0].code+=["ifgoto, neq, "+switchtemp+", "+p[4].place+", s"+str(slabel)+"\n"]
+		p[0].code+=p[6].code
+		p[0].code+="goto, safter \n"
+		p[0].code+=["label, s"+str(slabel)+"\n"]
+		p[0].code+=p[7].code
+		p[0].code+=["label, safter\n"]
+
 
 def p_opt_when_args(p):
 	'''opt_when_args  : WHEN when_args then compstmt opt_when_args
 					  | none'''
-	p[0]=["opt_when_args"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+	p[0]=Node()
+	global slabel
+	print "slabel is",slabel
+	global switchtemp
+	# p[0].code = ["label, s"+str(slabel)+"\n"]
+	slabel = slabel + 1
+	if(len(p)==6):
+		# p[0].code+=p[2].code
+		# if(p[5].code!=[]):
+		p[0].code+=["ifgoto, neq, "+switchtemp+", "+p[2].place+", s"+str(slabel)+"\n"]
+		# else:
+		# 	p[0].code+=["ifgoto, neq, "+switchtemp+", "+p[2].place+", s0"+"\n"]
+		p[0].code+=p[4].code
+		p[0].code+=["label, s"+str(slabel)+"\n"]
+		p[0].code+="goto, safter\n"
+		p[0].code+=p[5].code
+	# else:
+	# 	slabel=0
 
 def p_opt_argstuff(p):
-	'''opt_argstuff : opt_argstuff COMMA MULTIPLY arg
+	'''opt_argstuff : COMMA args opt_argstuff
 					| none'''
 	p[0]=["opt_argstuff"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
 
 def p_when_args(p):
-	'''when_args : args opt_argstuff
-				 | MULTIPLY arg'''
-	p[0]=["when_args"]
-	for i in range(1,len(p)):
-		p[0].append(p[i])
+	'''when_args : arg
+				 | arg COMMA when_args'''
+	if(len(p)==2):
+		p[0]=p[1]
+		print "yoloyo",p[0].place
+		p[0].code = p[1].place
+	else:
+		p[0]=Node()
+		p[0].code = [p[1].place+", "+p[3].code]
 
 def p_then(p):
 	'''then : terminals
@@ -543,12 +605,18 @@ def p_do(p):
 
 def p_block_var(p):
 	'''block_var : mlhs'''
+	print "yuio",p[-1]
+	allscopes[curr_scope].insert(p[1].place,'int')
 	p[0]=p[1]
 #########################################
 def p_opt_mlhs(p):
 	'''opt_mlhs : COMMA mlhs_item opt_mlhs
 				| none'''
-
+	if(len(p)==4):
+		p[0]=Node()
+		p[0].code = [", "+p[2].code+p[3].code]
+	else:
+		p[0]=p[1]
 
 def p_mlhs(p):
 	'''mlhs : mlhs_item opt_mlhs'''
@@ -576,15 +644,15 @@ def p_lhs(p):
 		p[0]=Node()
 		try:
 			int(p[3])
-			p[0].place=p[1].place+"["+p[3]+"]"
 			t=newtemp(allscopes[curr_scope],"pointer")
-			p[0].code = ["+, "+t+", "+p[1].place+", "+p[3]+"\n"]
-			p[0].code += ["*, "+t+"\n"]
+			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3]+" \n"]
+			p[0].code += ["*, "+t+" \n"]
+			p[0].place=t
 		except:
-			p[0].place=p[1].place+"["+p[3].place+"]"
 			t=newtemp(allscopes[curr_scope],"pointer")
-			p[0].code = ["+, "+t+", "+p[1].place+", "+p[3].place]
-			p[0].code += ["*, "+t]
+			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3].place+"\n"]
+			p[0].code += ["*, "+t+"\n"]
+			p[0].place=t
 
 	# print "check: lhs", p[0].code
 
