@@ -1,0 +1,14 @@
+Group - 33
+Manthan Sit - 150388 Kaushal Jyanni - 150325
+
+Files: sym_table.py
+       parser.py
+       lexer.py
+
+Test files - test1.rb, test2.rb, test3.rb, for.rb, func.rb, loop.rb, switch.rb
+
+Run: Commands
+- cd asgn4
+- make
+- bin/irgen test/test1.rb (to execute the first test-case file test1.rb)
+
