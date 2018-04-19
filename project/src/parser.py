@@ -242,6 +242,7 @@ def p_function(p):
 				| primary DOUBLECOLON variable'''
 	if(len(p)==5):
 		p[0]=Node()
+		p[1].place=p[1].place.split("_")[0]
 		p[0].code += p[3].code
 		p[0].place = p[1].place
 		if(p[1].place.startswith("print")):
@@ -319,6 +320,16 @@ def p_arg(p):
 				print allscopes[curr_scope].table
 				print "error. variable, "+ p[1].place +" value not assigned before"
 				sys.exit()
+			if(global_gettype(p[1].place)):
+				# print global_gettype(p[1].place),global_gettype(p[3].place)
+				if(global_gettype(p[1].place)!=global_gettype(p[3].place)):
+					print "type mismatch for ",p[1].place,p[3].place,global_gettype(p[1].place),"and1",global_gettype(p[3].place)
+					sys.exit()
+			else:
+				# print p[1].type,p[3].type 
+				if(p[1].type!=p[3].type):
+					print "type mismatch for ",p[1].place,p[3].place,p[1].type,"and2",p[3].type
+					sys.exit()
 			if(p[2] in ["<=","<",">=",">","==","!="]):
 				# #print "did the big stuff"
 				lab1 = newlabel()
@@ -357,7 +368,7 @@ def p_arg(p):
 					p[0].type = p[3].type
 				if(not allscopes[curr_scope].lookup(p[1])):
 					# print "type insertion is", p[3].type, "for ",p[1].place
-					allscopes[curr_scope].insert(p[1].place,p[3].type)
+					allscopes[curr_scope].insert(p[1].place,"int")
 			else:
 				p[1].type="array"
 				p[0].code = p[1].code
@@ -395,12 +406,12 @@ def p_arg(p):
 			t=newtemp(allscopes[curr_scope],"pointer")
 			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3]+" \n"]
 			p[0].code += ["*, "+t+" \n"]
-			p[0].place=t+"_"+curr_scope
+			p[0].place=t
 		except:
 			t=newtemp(allscopes[curr_scope],"pointer")
 			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3].place+"\n"]
 			p[0].code += ["*, "+t+"\n"]
-			p[0].place=t+"_"+curr_scope
+			p[0].place=t
 
 	# #print "check: arg", ''.join(p[0].code)
 
@@ -821,8 +832,8 @@ def p_op_asgn(p):
 
 def p_fname(p):
 	'''fname : variable'''
+	p[1].place=p[1].place.split("_")[0]
 	p[0] = p[1]
-
 # def p_operation(p):
 # 	'''operation : variable'''
 # 	p[0]=["operation"]
