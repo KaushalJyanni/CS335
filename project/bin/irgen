@@ -52,7 +52,7 @@ slabel=0
 def newtemp(st,typeof):
     global temps
     temps = temps + 1
-    name = "temp"+str(temps)
+    name = "temp"+str(temps)+"_"+str(curr_scope)
     st.insert(name, typeof)
     return name
 
@@ -64,14 +64,12 @@ def newlabel():
 
 def elselabel():
     global elabels
-    
     name = "elselabel"+str(elabels)
     elabels = elabels + 1
     return name
 
 def afterlabel():
     global alabels
-    
     name = "afterlabel"+str(alabels)
     alabels = alabels + 1
     return name
@@ -101,7 +99,7 @@ def newscope(name=None):
 	total_scopes=total_scopes+1
 	parent=curr_scope
 	curr_scope = total_scopes
-	scope_stack.append(curr_scope)
+	scope_stack.append(curr_scope)	
 	allscopes[curr_scope]=sym_table.Symtable(name)
 	allscopes[curr_scope].parent=parent
 	allscopes[parent].children.append(curr_scope)
@@ -114,29 +112,34 @@ def delscope():
 	curr_scope=scope_stack[-1]
 
 def global_lookup(var):
+	# print "type yo",type(var)
 	for sc in reversed(scope_stack):
-		if var in allscopes[sc].table.keys():
-			return allscopes[sc].table[var]
+		for key in allscopes[sc].table.keys():
+			if key.startswith(str(var)+"_") or key==var:
+				return key
+		# if var in allscopes[sc].table.keys():
 	return None
 
 def global_gettype(var):
 	for sc in reversed(scope_stack):
-		if var in allscopes[sc].table.keys():
-			return allscopes[sc].table[var]["type"]
+		for key in allscopes[sc].table.keys():
+			if key.startswith(str(var)+"_"):
+				return allscopes[sc].table[key]["type"]
 	return None
 
 def printfinal(node):
 	# print
 	# print
-	print ''.join(node.code+["return"])
+	# print ''.join(node.code+["return"])
+	print ''.join(node.code)
 	# print "return"
 	# print
 	# global total_scopes
 	# print "total",total_scopes+1
 	# for curr_scope in range(0,total_scopes+1):
-	# 	# print curr_scope
-	# 	# print allscopes[curr_scope].table
-	# 	# print
+	# 	print curr_scope
+	# 	print allscopes[curr_scope].table
+	# 	print
 
 class Node:
 	def __init__(self):
@@ -189,9 +192,15 @@ def p_stmt(p):
 			| BEGIN LCBRACKET compstmt RBRACKET
 			| END LCBRACKET compstmt RBRACKET
 			| lhs EQUAL command
-			| lhs EQUAL command do compstmt END'''
+			| lhs EQUAL command do compstmt END
+			| main'''
 	if(len(p)==2):
 		p[0]=p[1]
+
+def p_main(p):
+	'''main : MAIN'''
+	p[0]=Node()
+	p[0].code=["MAIN\n"]	
 
 def p_expr(p):
 	'''expr : mlhs EQUAL mrhs
@@ -201,7 +210,8 @@ def p_expr(p):
 			| NOT expr
 			| command
 			| LOGICAL_NOT command
-			| args'''
+			| args
+			| main'''
 	if(len(p)==2):
 		p[0]=p[1]
 	elif(p[1]=="return"):
@@ -234,8 +244,11 @@ def p_function(p):
 		p[0]=Node()
 		p[0].code += p[3].code
 		p[0].place = p[1].place
-		# p[0].code += ["call, "+p[1].place+"\n"]
+		if(p[1].place.startswith("print")):
+			# print "yes found print"
+			p[0].code += ["print\n"]
 		p[0].type = "function"
+
 
 
 def p_arg(p):
@@ -284,11 +297,15 @@ def p_arg(p):
 		elif(p[2] in ['+','-','/','*','%','^','|','<<','>>','&','&&','||',"<=","<",">=",">","==","!="]):
 			#print "latest check,",p[1],p[1].code,p[1].type,p[1].place
 			if(p[1].type):
-				temp = newtemp(allscopes[curr_scope], p[1].type)
+				if(global_gettype(p[1].place)):
+					temp = newtemp(allscopes[curr_scope], global_gettype(p[1].place))
+				else:
+					temp = newtemp(allscopes[curr_scope], p[1].type)
+				# print "my type is",temp,p[1].type
 			else:
 				temp = newtemp(allscopes[curr_scope], global_gettype(p[1]))	
 			# #print "check arg p1 ",p[1].code
-			# #print "check arg p3 ",p[3].code
+			# #print "check arg p3 ",p[3].code	
 			p[0]=Node()
 			p[0].code = p[1].code + p[3].code
 			p[0].place = temp
@@ -321,6 +338,8 @@ def p_arg(p):
 				p[1].type = p[3].type
 				try:
 					float(p[3].place)
+					p[1].place=p[1].place.split("_")[0]+"_"+str(curr_scope)
+					# print "success nigger"
 				except:
 					#print "checking",p[3].place
 					if(p[3].type == "variable" and (not global_lookup(p[3].place))):
@@ -376,12 +395,12 @@ def p_arg(p):
 			t=newtemp(allscopes[curr_scope],"pointer")
 			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3]+" \n"]
 			p[0].code += ["*, "+t+" \n"]
-			p[0].place=t
+			p[0].place=t+"_"+curr_scope
 		except:
 			t=newtemp(allscopes[curr_scope],"pointer")
 			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3].place+"\n"]
 			p[0].code += ["*, "+t+"\n"]
-			p[0].place=t
+			p[0].place=t+"_"+curr_scope
 
 	# #print "check: arg", ''.join(p[0].code)
 
@@ -657,12 +676,12 @@ def p_lhs(p):
 			t=newtemp(allscopes[curr_scope],"pointer")
 			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3]+" \n"]
 			p[0].code += ["*, "+t+" \n"]
-			p[0].place=t
+			p[0].place=t+"_"+str(curr_scope)
 		except:
 			t=newtemp(allscopes[curr_scope],"pointer")
 			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3].place+"\n"]
 			p[0].code += ["*, "+t+"\n"]
-			p[0].place=t
+			p[0].place=t+"_"+str(curr_scope)
 
 	# #print "check: lhs", p[0].code
 
@@ -750,8 +769,9 @@ def p_opt_variables(p):
 		argno += 1
 		p[0]=p[2]
 		p[0].code += ["load, arg"+str(argno)+", "+p[2].place+"\n"]
-		p[0].code += p[3].code
-		allscopes[curr_scope].insert(p[2].place)
+		if(p[3]):
+			p[0].code += p[3].code
+		allscopes[curr_scope].insert(p[2].place,global_gettype(p[2].place))
 	elif(len(p)==2):
 		argno = 0
 
@@ -821,7 +841,10 @@ def p_variable(p):
 			    | DOLLAR VARIABLE'''
 	if(len(p)==2):
 		p[0]=Node()
-		p[0].place=p[1]
+		if(global_lookup(p[1])):
+			p[0].place=str(global_lookup(p[1]))
+		else:
+			p[0].place=p[1]+"_"+str(curr_scope)
 		p[0].type="variable"
 		if(global_lookup(p[1])):
 			#print "found type of", p[1]

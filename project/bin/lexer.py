@@ -28,6 +28,8 @@ reserved = {
    'until' : 'UNTIL',
    'when' : 'WHEN',
    'while' : 'WHILE',
+   'array' : 'ARRAY',
+   'new' : 'NEW',
    'main' : 'MAIN'
 }
 

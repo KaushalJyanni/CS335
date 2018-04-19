@@ -37,9 +37,9 @@ print "main:"
 print "\tcall realmain"
 print "\tjmp exit"
 print
-print "realmain:"
-print "pushl\t%ebp"
-print "movl\t%esp,%ebp"
+# print "realmain:"
+# print "pushl\t%ebp"
+# print "movl\t%esp,%ebp"
 j=0
 for block in blocks:
 	nextinfotable=ui.useinfo(block)

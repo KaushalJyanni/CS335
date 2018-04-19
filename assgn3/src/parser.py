@@ -76,7 +76,8 @@ def p_stmt(p):
 			| END LCBRACKET compstmt RBRACKET
 			| lhs EQUAL command
 			| lhs EQUAL command do compstmt END
-			| expr'''
+			| expr
+			| MAIN'''
 	p[0]=["stmt"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -89,7 +90,8 @@ def p_expr(p):
 			| NOT expr
 			| command
 			| LOGICAL_NOT command
-			| args'''
+			| args
+			| MAIN'''
 	p[0]=["expr"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])
@@ -102,8 +104,7 @@ def p_call(p):
 		p[0].append(p[i])
 
 def p_command(p):
-	'''command : variable call_args
-			   | primary DOT variable call_args'''
+	'''command : primary DOT variable call_args'''
 	p[0]=["command"]
 	for i in range(1,len(p)):
 		p[0].append(p[i])

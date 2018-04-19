@@ -14,8 +14,8 @@ name={
 	'%=':"mod",#thorugh div
 	'<<':"shl",
 	'>>':"shr",
-	'&':"andl",
-	'|':"orl",
+	'&&':"andl",
+	'||':"orl",
 	'^':"xorl",
 	'<<=':"shl",
 	'>>=':"shr",
@@ -31,7 +31,12 @@ name={
 }
 
 def gencode(i,instruction,nextinfotable):
-	if(instruction.instype=='assignment'):
+	if(instruction.instype=='main'):
+		print "realmain:"
+		print "pushl\t%ebp"
+		print "movl\t%esp,%ebp"
+
+	elif(instruction.instype=='assignment'):
 		if(check_int(instruction.src1)):
 			if(addrdesc[instruction.target][0]):
 				print str("movl\t$")+instruction.src1+str(",\t%")+addrdesc[instruction.target][0]
@@ -43,7 +48,7 @@ def gencode(i,instruction,nextinfotable):
 				if(addrdesc[instruction.target][0]):
 					print str("movl\t%")+ydash+str(",\t%")+addrdesc[instruction.target][0]
 				else:
-					print str("movl\t%")+ydash+str(",\t(")+instruction.target+")"
+					print str("movl\t%")+ydash+str(",\t")+instruction.target+""
 			else:
 				regt=getreg(instruction,i,nextinfotable,instruction.target)
 				print str("movl\t(")+instruction.src1+str("),\t%")+regt
@@ -198,6 +203,17 @@ def gencode(i,instruction,nextinfotable):
 		else:
 			print "movl\t%eax"+",\t"+instruction.src1
 
+	elif(instruction.instype=="load"):
+		regt = getreg(instruction,i,nextinfotable,instruction.target)
+		print "movl\t"+str(4+4*int(instruction.src1))+"(%ebp),\t%"+regt
+
+	elif(instruction.instype == "push"):
+		# writeback()
+		if(addrdesc[instruction.src1][0]):
+			print "pushl\t%"+addrdesc[instruction.src1][0]
+		else:
+			print "pushl\t"+instruction.src1
+	
 	elif(instruction.instype == 'retint'):
 		writeback()
 		if(not check_int(instruction.target)):
@@ -221,10 +237,10 @@ def gencode(i,instruction,nextinfotable):
 		print
 	elif(instruction.instype == "print"):
 		# writeback()
-		if(addrdesc[instruction.src1][0]):
-			print "pushl\t%"+addrdesc[instruction.src1][0]
-		else:
-			print "pushl\t"+instruction.src1
+		# if(addrdesc[instruction.src1][0]):
+		# 	print "pushl\t%"+addrdesc[instruction.src1][0]
+		# else:
+		# 	print "pushl\t"+instruction.src1
 		print "pushl $outFormat"
 		print "call printf" 
 	

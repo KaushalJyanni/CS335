@@ -170,4 +170,19 @@ def getreg(instruction,insnumber,nextinfotable,var):
 						farthestreg=reg
 			spill(farthestreg,farthestvar)
 			return farthestreg
+	elif(instruction.instype=="load"):
+		if(findempty()):
+			reg=findempty()
+			y=instruction.target
+			addrdesc[y][0]=reg
+			addrdesc[y][1]=False
+			regdesc[reg]=y
+			return reg
+		else:
+			reg=farthest(instruction,insnumber,nextinfotable)
+			y=instruction.target
+			addrdesc[y][0]=reg
+			addrdesc[y][1]=False
+			regdesc[reg]=y
+			return reg
 

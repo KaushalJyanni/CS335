@@ -28,7 +28,7 @@ class threeAddCode:
 			self.src2 = instruction[3]
 			self.target = instruction[2]
 
-		elif(instruction[1] in ['^','|','<<','>>','&']):
+		elif(instruction[1] in ['^','||','<<','>>','&&']):
 			self.instype = "logical"
 			self.operation = instruction[1]
 			self.src1 = instruction[3]
@@ -78,12 +78,25 @@ class threeAddCode:
 
 		elif(instruction[1] == "print"):
 			self.instype = "print"
-			self.src1 = instruction[2]
+			# self.src1 = instruction[2]
 		
 		elif(instruction[1] == "scan"):		#todo
 			self.instype = "scan"
 			self.target = instruction[2]
 
+		elif(instruction[1]== "load"):
+			self.instype = "load"
+			self.src1 = instruction[2][-1]
+			# self.src2 = instruction[4]
+			self.target = instruction[3]
+
+		elif(instruction[1]== "push"):
+			self.instype = "push"
+			self.src1 = instruction[2]
+
+		elif(instruction[1]== "MAIN"):
+			self.instype="main"
+		
 		else:
 			print "unknown instruction type,",instruction[1], "aborting"
 			exit()
