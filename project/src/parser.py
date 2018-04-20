@@ -49,6 +49,7 @@ alabels=0
 argno = 0
 switchtemp="stemp"
 slabel=0
+class_m=1
 def newtemp(st,typeof):
     global temps
     temps = temps + 1
@@ -249,8 +250,16 @@ def p_function(p):
 			# print "yes found print"
 			p[0].code += ["print\n"]
 		p[0].type = "function"
-
-
+	elif(len(p)==4):
+		p[0]=Node()
+		p[3].place=p[3].place.split("_")[0]
+		p[0].place=p[1].place+"_"+p[3].place
+	elif(len(p)==7):
+		p[0]=Node()
+		p[3].place=p[3].place.split("_")[0]
+		p[0].code += p[5].code
+		p[0].place = p[1].place+"_"+p[3].place
+		p[0].type = "function"
 
 def p_arg(p):
 	'''arg : lhs EQUAL arg
@@ -278,6 +287,7 @@ def p_arg(p):
 		   | arg BINARY_RSHIFT arg
 		   | arg LOGICAL_AND arg
 		   | arg LOGICAL_OR arg
+		   | NEWCLASS variable 
 		   | ARRAY DOT NEW LPARENTHESIS variable RPARENTHESIS
 		   | ARRAY DOT NEW LPARENTHESIS INTNUMBER RPARENTHESIS
 		   | variable LBRACKET variable RBRACKET
@@ -299,12 +309,15 @@ def p_arg(p):
 			#print "latest check,",p[1],p[1].code,p[1].type,p[1].place
 			if(p[1].type):
 				if(global_gettype(p[1].place)):
+					print p[1].place,"check"
 					temp = newtemp(allscopes[curr_scope], global_gettype(p[1].place))
 				else:
+					print p[1].place,"check"
 					temp = newtemp(allscopes[curr_scope], p[1].type)
 				# print "my type is",temp,p[1].type
 			else:
-				temp = newtemp(allscopes[curr_scope], global_gettype(p[1]))	
+				print p[1].place,"check"
+				temp = newtemp(allscopes[curr_scope], global_gettype(p[1].place))	
 			# #print "check arg p1 ",p[1].code
 			# #print "check arg p3 ",p[3].code	
 			p[0]=Node()
@@ -320,16 +333,16 @@ def p_arg(p):
 				print allscopes[curr_scope].table
 				print "error. variable, "+ p[1].place +" value not assigned before"
 				sys.exit()
-			if(global_gettype(p[1].place)):
-				# print global_gettype(p[1].place),global_gettype(p[3].place)
-				if(global_gettype(p[1].place)!=global_gettype(p[3].place)):
-					print "type mismatch for ",p[1].place,p[3].place,global_gettype(p[1].place),"and1",global_gettype(p[3].place)
-					sys.exit()
-			else:
-				# print p[1].type,p[3].type 
-				if(p[1].type!=p[3].type):
-					print "type mismatch for ",p[1].place,p[3].place,p[1].type,"and2",p[3].type
-					sys.exit()
+			# if(global_gettype(p[1].place)):
+			# 	# print global_gettype(p[1].place),global_gettype(p[3].place)
+			# 	if(global_gettype(p[1].place)!=global_gettype(p[3].place)):
+			# 		print "type mismatch for ",p[1].place,p[3].place,global_gettype(p[1].place),"and1",global_gettype(p[3].place)
+			# 		sys.exit()
+			# else:
+			# 	# print p[1].type,p[3].type 
+			# 	if(p[1].type!=p[3].type):
+			# 		print "type mismatch for ",p[1].place,p[3].place,p[1].type,"and2",p[3].type
+			# 		sys.exit()
 			if(p[2] in ["<=","<",">=",">","==","!="]):
 				# #print "did the big stuff"
 				lab1 = newlabel()
@@ -343,13 +356,28 @@ def p_arg(p):
 			else:	
 				p[0].code += [p[2]+", "+p[0].place+", "+p[1].place+", "+p[3].place+" \n"]
 		elif(p[2]=='='):
-			p[0]=Node()
-			if(p[3].type!="array"):
+			p[0]=Node()				
+			if(p[3].type=="class"):
+				p[3].place=p[3].place.split("_")[0]
+				p[0].code=["newclass,",p[1].place,","+p[3].place+"\n"]
+				p[0].type="class"
+			elif(p[3].type=="array"):
+				p[1].type="array"
+				p[0].code = p[1].code
+				p[0].code = ["array, "+p[1].place+"\n"]
+				p[0].type = p[3].type
+				if(not allscopes[curr_scope].lookup(p[1])):
+					#print "type insertion is", p[3].type, "for ",p[1].place
+					allscopes[curr_scope].insert(p[1].place,p[3].type)
+			else:
 				#print "updating type of",p[1].place,p[3].type
+				# if(p[3].type):
 				p[1].type = p[3].type
+
 				try:
 					float(p[3].place)
-					p[1].place=p[1].place.split("_")[0]+"_"+str(curr_scope)
+					if("_" in p[0]):
+						p[1].place=p[1].place.split("_")[0]+"_"+str(curr_scope)
 					# print "success nigger"
 				except:
 					#print "checking",p[3].place
@@ -369,18 +397,14 @@ def p_arg(p):
 				if(not allscopes[curr_scope].lookup(p[1])):
 					# print "type insertion is", p[3].type, "for ",p[1].place
 					allscopes[curr_scope].insert(p[1].place,"int")
-			else:
-				p[1].type="array"
-				p[0].code = p[1].code
-				p[0].code = ["array, "+p[1].place+"\n"]
-				p[0].type = p[3].type
-				if(not allscopes[curr_scope].lookup(p[1])):
-					#print "type insertion is", p[3].type, "for ",p[1].place
-					allscopes[curr_scope].insert(p[1].place,p[3].type)
 	elif(len(p)==2):
 		#print "---------------------",p[1]
 		p[0] = p[1]
 		#print "type of arg", p[0].place, p[0].type
+	elif(p[1]=="newclass"):
+		p[0]=Node()
+		p[0].place=p[2].place
+		p[0].type="class"
 	elif(len(p)==3):
 		temp = newtemp(allscopes[curr_scope],"bool")
 		p[0]=Node()
@@ -481,6 +505,18 @@ def p_efscope(p):
 	curr_scope=scope_stack[-1]
 	# delscope()
 
+def p_cstart(p):
+	'''cstart : '''
+	global class_m
+	class_m=1
+	# print "set class_m to 1"
+
+def p_endclass(p):
+	'''endclass : ENDCLASS'''
+	global class_m
+	class_m=0
+	# print "set class_m to 0"
+
 def p_primary(p):
 	'''primary : LPARENTHESIS compstmt RPARENTHESIS
 				 | variable
@@ -498,10 +534,17 @@ def p_primary(p):
 				 | CASE compstmt WHEN when_args then compstmt opt_when_args opt_elsestmt END
 				 | nscope FOR block_var IN expr do compstmt escope END
 				 | BEGIN compstmt END
-				 | CLASS variable terminals compstmt END
+				 | CLASS cstart variable terminals compstmt endclass
 				 | DEF fname nfscope argdecl compstmt efscope END'''
 	global curr_scope
-	if(len(p)==2):
+	if(p[1]=="class"):
+		p[0]=Node()
+		p[0].type="class"
+		p[3].place=p[3].place.split("_")[0]
+		p[0].code=["class, "+p[3].place+"\n"]
+		p[0].code+=p[5].code
+		p[0].code+=["endclass\n"]
+	elif(len(p)==2):
 		if(p[1]!='return'):
 			#print p[1]
 			p[0]=p[1]
@@ -693,7 +736,10 @@ def p_lhs(p):
 			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3].place+"\n"]
 			p[0].code += ["*, "+t+"\n"]
 			p[0].place=t+"_"+str(curr_scope)
-
+	elif(len(p)==4):
+		p[0]=Node()
+		p[3].place=p[3].place.split("_")[0]
+		p[0].place=p[1].place+"_"+p[3].place
 	# #print "check: lhs", p[0].code
 
 def p_mrhs(p):
@@ -782,7 +828,7 @@ def p_opt_variables(p):
 		p[0].code += ["load, arg"+str(argno)+", "+p[2].place+"\n"]
 		if(p[3]):
 			p[0].code += p[3].code
-		allscopes[curr_scope].insert(p[2].place,global_gettype(p[2].place))
+		allscopes[curr_scope].insert(p[2].place,"int")
 	elif(len(p)==2):
 		argno = 0
 
@@ -798,7 +844,7 @@ def p_arglist(p):
 		p[0].code += ["load, arg"+str(argno)+", "+p[1].place+"\n"]
 		if(p[2]):
 			p[0].code += p[2].code
-		allscopes[curr_scope].insert(p[1].place,p[1].type)
+		allscopes[curr_scope].insert(p[1].place,"int")
 
 def p_literal(p):
 	'''literal : INTNUMBER
@@ -852,10 +898,17 @@ def p_variable(p):
 			    | DOLLAR VARIABLE'''
 	if(len(p)==2):
 		p[0]=Node()
-		if(global_lookup(p[1])):
-			p[0].place=str(global_lookup(p[1]))
+		# print 'found var'
+		global class_m
+		# print class_m
+		if(not class_m):
+			if(global_lookup(p[1])):
+				p[0].place=str(global_lookup(p[1]))
+			else:
+				p[0].place=p[1]+"_"+str(curr_scope)
 		else:
-			p[0].place=p[1]+"_"+str(curr_scope)
+			p[0].place=p[1]
+			# print "yuio",p[0].place
 		p[0].type="variable"
 		if(global_lookup(p[1])):
 			#print "found type of", p[1]

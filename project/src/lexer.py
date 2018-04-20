@@ -30,7 +30,9 @@ reserved = {
    'while' : 'WHILE',
    'array' : 'ARRAY',
    'new' : 'NEW',
-   'main' : 'MAIN'
+   'main' : 'MAIN',
+   'endclass' : 'ENDCLASS',
+   'newclass' : 'NEWCLASS'
 }
 
 arithmetic = [
@@ -175,7 +177,7 @@ while token:
       results[token.type][0]+=1
       results[token.type].append(token.value)
    token = lexer.token()
-# print results
+# print results 
 # print "\n"
 # print "TOKEN".ljust(25),"Occurences".ljust(15),"Lexemes"
 # print "-------------------------------------------------"

@@ -101,11 +101,13 @@ class threeAddCode:
 			print "unknown instruction type,",instruction[1], "aborting"
 			exit()
 		
-		if(self.target and self.target not in symbollist and not check_int(self.target)):
+		# print self.target
+		# print self.src1[0]
+		if(self.target and self.target not in symbollist and not check_int(self.target) and self.target[0]!="'"):
 			symbollist.append(self.target)
-		if(self.src1 and self.src1 not in symbollist and not check_int(self.src1)):
+		if(self.src1 and self.src1 not in symbollist and not check_int(self.src1) and self.src1[0]!="'"):
 			symbollist.append(self.src1)
-		if(self.src2 and self.src2 not in symbollist and not check_int(self.src2)):
+		if(self.src2 and self.src2 not in symbollist and not check_int(self.src2) and self.src2[0]!="'"):
 			symbollist.append(self.src2)
 	
 	def __repr__(self):
