@@ -108,6 +108,18 @@ class threeAddCode:
 
 		elif(instruction[1] == "endclass"):
 			self.instype="endclass"
+		elif(instruction[1]=="array"):
+			self.instype="array"
+			self.src1 = instruction[3]
+			self.target = instruction[2]
+		elif(instruction[1]=="store"):
+			self.instype="store"
+			self.src1 = instruction[2]
+			self.target = instruction[3]
+		elif(instruction[1]=="dstore"):
+			self.instype="dstore"
+			self.src1 = instruction[2]
+			self.target = instruction[3]
 		else:
 			print "unknown instruction type,",instruction[1], "aborting"
 			exit()

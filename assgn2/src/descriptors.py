@@ -66,7 +66,23 @@ def getreg(instruction,insnumber,nextinfotable,var):
 		else:
 			spill("ecx",vecx)
 			return "ecx"
-	
+	elif(instruction.instype=="dstore"):
+		x=instruction.target
+		y=instruction.src1
+		z=instruction.src2
+		if(not check_int(y)):
+			ydash=addrdesc[y][0]
+		else:
+			ydash=''
+		# #y is in register and no next use
+		# if(ydash and nextinfotable[insnumber][y][1]==infinity):
+		# 	spill(ydash,y)
+		# 	return ydash
+		#return empty register
+		if(findempty()):
+			return findempty()
+		else:
+			return farthest(instruction,insnumber,nextinfotable)
 	elif(instruction.instype=="assignment"or instruction.instype=="arithmetic"or instruction.instype=="logical"):
 			x=instruction.target
 			y=instruction.src1

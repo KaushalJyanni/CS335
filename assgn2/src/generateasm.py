@@ -41,6 +41,51 @@ def gencode(i,instruction,nextinfotable):
 		pass
 	elif(instruction.instype=="endclass"):
 		pass
+	elif(instruction.instype=="store"):
+		if(check_int(instruction.src1)):
+			if(addrdesc[instruction.target][0]):
+				print "movl\t$",instruction.src1+",\t(%"+addrdesc[instruction.target][0]+")"
+			else:
+				print "movl\t$",instruction.src1+",\t("+instruction.target+")"
+		else:
+			if(addrdesc[instruction.src1][0]):
+				print "movl\t%",addrdesc[instruction.src1][0]+",\t(%"+addrdesc[instruction.target][0]+")"
+			else:
+				print "movl\t(",instruction.src1+"),\t("+instruction.target+")"
+	elif(instruction.instype=="dstore"):
+		ydash=addrdesc[instruction.src1][0]
+		if(ydash):
+			if(addrdesc[instruction.target][0]):
+				print "#from 1"
+				print str("movl\t(%")+ydash+str("),\t%")+addrdesc[instruction.target][0]
+			else:
+				print "#from 2"
+				regt=getreg(instruction,i,nextinfotable,instruction.src1)
+				print str("movl\t(%")+ydash+str("),\t%")+regt
+				addrdesc[instruction.target][0]=regt
+				addrdesc[instruction.target][1]=False
+				regdesc[regt]=instruction.target
+		else:
+			regsrc=getreg(instruction,i,nextinfotable,instruction.src1)
+			addrdesc[instruction.src1][0]=regsrc
+			addrdesc[instruction.src1][1]=False
+			regdesc[regsrc]=instruction.src1
+			if(addrdesc[instruction.target][0]):
+				print "#from3"
+				print str("movl\t(%")+regsrc+str("),\t%")+addrdesc[instruction.target][0]
+			else:
+				print "#from4"
+				regt=getreg(instruction,i,nextinfotable,instruction.src1)
+				print str("movl\t(%")+regsrc+str("),\t%")+regt
+				addrdesc[instruction.target][0]=regt
+				addrdesc[instruction.target][1]=False
+				regdesc[regt]=instruction.target	
+	elif(instruction.instype=="array"):
+		print "subl\t$"+instruction.src1+",\t%esp"
+		if(addrdesc[instruction.target][0]):
+			print "movl\t%esp,\t",addrdesc[instruction.target][0]
+		else:
+			print "movl\t%esp,\t",instruction.target
 	elif(instruction.instype=='assignment'):
 		if(check_int(instruction.src1)):
 			if(addrdesc[instruction.target][0]):

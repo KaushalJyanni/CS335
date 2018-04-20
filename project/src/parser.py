@@ -398,7 +398,9 @@ def p_arg(p):
 			else:
 				p[0].code += [p[2]+", "+p[0].place+", "+p[1].place+", "+p[3].place+" \n"]
 		elif(p[2]=='='):
-			p[0]=Node()				
+			p[0]=Node()		
+			# if(p[1].type=="pointer"):
+			# 	p[0].code=		
 			if(p[3].type=="class"):
 				if(not p[3].place.endswith("class")):
 					p[3].place=p[3].place.split("_")[0]
@@ -407,8 +409,7 @@ def p_arg(p):
 				p[0].type="class"
 			elif(p[3].type=="array"):
 				p[1].type="array"
-				p[0].code = p[1].code
-				p[0].code = ["array, "+p[1].place+"\n"]
+				p[0].code = ["array, "+p[1].place+", "]+p[3].code+["\n"]
 				p[0].type = p[3].type
 				if(not allscopes[curr_scope].lookup(p[1])):
 					#print "type insertion is", p[3].type, "for ",p[1].place
@@ -416,7 +417,9 @@ def p_arg(p):
 			else:
 				#print "updating type of",p[1].place,p[3].type
 				# if(p[3].type):
-				p[1].type = p[3].type
+				if(p[1].type!="pointer" and p[3].type!="pointer"):
+					# print "not pointer for ",p[1].place,p[1].type
+					p[1].type = p[3].type
 
 				try:
 					float(p[3].place)
@@ -436,6 +439,14 @@ def p_arg(p):
 				p[0].code = p[1].code + p[3].code
 				if(p[3].type=="function"):
 					p[0].code += ["callint, "+p[1].place+", "+p[3].place+" \n"]	
+					p[0].type = "int"
+				elif(p[1].type=="pointer"):
+					p[0].code += ["store, "+p[3].place+", "+p[1].place+" \n"]
+					p[1].type = p[3].type
+					p[0].type = p[3].type
+				elif(p[3].type=="pointer"):
+					p[0].code += ["dstore, "+p[3].place+", "+p[1].place+" \n"]
+					p[1].type = "int"
 					p[0].type = "int"
 				else:
 					p[0].code += ["=, "+p[1].place+", "+p[3].place+" \n"]
@@ -474,14 +485,16 @@ def p_arg(p):
 		try:
 			int(p[3])
 			t=newtemp(allscopes[curr_scope],"pointer")
-			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3]+" \n"]
-			p[0].code += ["*, "+t+" \n"]
+			p[0].code += ["+, "+t+", "+p[1].place+", "+str(4*int(p[3]))+" \n"]
+			# p[0].code += ["*, "+t+" \n"]
 			p[0].place=t
 		except:
-			t=newtemp(allscopes[curr_scope],"pointer")
-			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3].place+"\n"]
-			p[0].code += ["*, "+t+"\n"]
-			p[0].place=t
+			t1=newtemp(allscopes[curr_scope],"pointer")
+			t2=newtemp(allscopes[curr_scope],"pointer")
+			p[0].code += ["*, "+t2+", 4, "+p[3].place+"\n"]
+			p[0].code += ["+, "+t1+", "+p[1].place+", "+t2+"\n"]
+			# p[0].code += ["*, "+t+"\n"]
+			p[0].place=t1
 
 	# #print "check: arg", ''.join(p[0].code)
 
@@ -778,17 +791,21 @@ def p_lhs(p):
 		p[0].place = p[1].place
 	elif(len(p)==5):
 		p[0]=Node()
+		p[0].type="pointer"
 		try:
 			int(p[3])
 			t=newtemp(allscopes[curr_scope],"pointer")
-			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3]+" \n"]
-			p[0].code += ["*, "+t+" \n"]
-			p[0].place=t+"_"+str(curr_scope)
+			p[0].code += ["+, "+t+", "+p[1].place+", "+str(4*int(p[3]))+" \n"]
+			# p[0].code += ["*, "+t+" \n"]
+			p[0].place=t
 		except:
-			t=newtemp(allscopes[curr_scope],"pointer")
-			p[0].code += ["+, "+t+", "+p[1].place+", "+p[3].place+"\n"]
-			p[0].code += ["*, "+t+"\n"]
-			p[0].place=t+"_"+str(curr_scope)
+			t1=newtemp(allscopes[curr_scope],"pointer")
+			t2=newtemp(allscopes[curr_scope],"pointer")
+			p[0].code += ["*, "+t2+", 4, "+p[3].place+"\n"]
+			# p[0].code += ["+, "+t1+", "+p[1].place+", "+t2+"\n"]
+			p[0].code += ["+, "+t1+", "+p[1].place+", "+t2+"\n"]
+			# p[0].code += ["*, "+t1+"\n"]
+			p[0].place=t1
 	elif(len(p)==4):
 		p[0]=Node()
 		try:
