@@ -3,13 +3,15 @@ wflg = 0
 tflg = 0
 dflg = 0
 
-c = 'w'
+c = 3
 
 case c
-when "w" then wflg = 1
-when "t" then tflg = 1
-when "d" then dflg = 1
+when 1 then wflg = 1
+when 2 then tflg = 1
+when 3 then dflg = 1
 end
 
 print(wflg)
+print(tflg)
+print(dflg)
 

@@ -6,7 +6,7 @@ class a
         return z
     end
 endclass
-
+main
 f = newclass a
 g = newclass a
 g.y = 1
