@@ -675,7 +675,7 @@ def p_primary(p):
 		#print p[2].place
 		p[0].code+=["ifgoto, neq, "+switchtemp+", "+p[4].place+", s"+str(slabel)+"\n"]
 		p[0].code+=p[6].code
-		p[0].code+="goto, safter \n"
+		# p[0].code+="goto, safter \n"
 		p[0].code+=["label, s"+str(slabel)+"\n"]
 		p[0].code+=p[7].code
 		p[0].code+=["label, safter\n"]
