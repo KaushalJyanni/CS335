@@ -363,9 +363,14 @@ def p_arg(p):
 			# #print "check arg p1 ",p[1].code
 			# #print "check arg p3 ",p[3].code	
 			p[0]=Node()
-			p[0].code = p[1].code + p[3].code
-			p[0].place = temp
+			# p[0],code=[]
+			p[0].code = p[1].code
 			p[0].type=p[1].type
+			if(p[1].type=="pointer"):
+				p[0].code+=["dstore, "+p[1].place+", "+p[1].place+"\n"]
+				p[0].type="int"
+			p[0].code += p[3].code
+			p[0].place = temp
 			#print "checking ", p[3].place
 			if(p[3].type=="variable" and (not global_lookup(p[3].place))):
 				print "error. variable, "+ p[3].place +" value not assigned before"
@@ -486,13 +491,21 @@ def p_arg(p):
 			int(p[3])
 			t=newtemp(allscopes[curr_scope],"pointer")
 			p[0].code += ["+, "+t+", "+p[1].place+", "+str(4*int(p[3]))+" \n"]
+			# p[0].code += ["dstore",p[0]]
 			# p[0].code += ["*, "+t+" \n"]
+			if(p[-1]!="="):
+				# print "executed ur code"
+				p[0].code += ["dstore, "+t+", "+t+"\n"]
 			p[0].place=t
 		except:
 			t1=newtemp(allscopes[curr_scope],"pointer")
 			t2=newtemp(allscopes[curr_scope],"pointer")
 			p[0].code += ["*, "+t2+", 4, "+p[3].place+"\n"]
 			p[0].code += ["+, "+t1+", "+p[1].place+", "+t2+"\n"]
+			# print "executed, ",p[-1]
+			if(p[-1]!="="):
+				# print "executed ur code"
+				p[0].code += ["dstore, "+t1+", "+t1+"\n"]
 			# p[0].code += ["*, "+t+"\n"]
 			p[0].place=t1
 
@@ -804,7 +817,8 @@ def p_lhs(p):
 			p[0].code += ["*, "+t2+", 4, "+p[3].place+"\n"]
 			# p[0].code += ["+, "+t1+", "+p[1].place+", "+t2+"\n"]
 			p[0].code += ["+, "+t1+", "+p[1].place+", "+t2+"\n"]
-			# p[0].code += ["*, "+t1+"\n"]
+			# if(p[-1]!="="):
+			# 	p[0].code += ["dstore, "+t1+", "+t1+"\n"]
 			p[0].place=t1
 	elif(len(p)==4):
 		p[0]=Node()
