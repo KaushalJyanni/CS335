@@ -7,4 +7,10 @@ if b > 1 then
    print(a) 
 end
 
+for i in (0..1)
+   print(a)
+   a = 9
+   print(a)
+end
+
 print(a)
