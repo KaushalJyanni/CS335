@@ -81,7 +81,13 @@ def gencode(i,instruction,nextinfotable):
 				addrdesc[instruction.target][1]=False
 				regdesc[regt]=instruction.target	
 	elif(instruction.instype=="array"):
-		print "subl\t$"+instruction.src1+",\t%esp"
+		if(check_int(instruction.src1)):
+			print "subl\t$"+instruction.src1+",\t%esp"
+		else:
+			if(addrdesc[isntruction.src1][0]):
+				print "subl\t%"+instruction.src1+",\t%esp"
+			else:
+				print "subl\t("+instruction.src1+"),\t%esp"
 		if(addrdesc[instruction.target][0]):
 			print "movl\t%esp,\t",addrdesc[instruction.target][0]
 		else:
