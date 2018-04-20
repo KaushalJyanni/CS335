@@ -49,7 +49,10 @@ alabels=0
 argno = 0
 switchtemp="stemp"
 slabel=0
-class_m=1
+class_m=0
+class_n=None
+classlist={}
+classinstances={}
 def newtemp(st,typeof):
     global temps
     temps = temps + 1
@@ -116,7 +119,7 @@ def global_lookup(var):
 	# print "type yo",type(var)
 	for sc in reversed(scope_stack):
 		for key in allscopes[sc].table.keys():
-			if key.startswith(str(var)+"_") or key==var:
+			if ((key.startswith(str(var)+"_") and not key.endswith("class")) or key==var):
 				return key
 		# if var in allscopes[sc].table.keys():
 	return None
@@ -141,6 +144,8 @@ def printfinal(node):
 	# 	print curr_scope
 	# 	print allscopes[curr_scope].table
 	# 	print
+	# print classlist
+	# print classinstances
 
 class Node:
 	def __init__(self):
@@ -194,6 +199,7 @@ def p_stmt(p):
 			| END LCBRACKET compstmt RBRACKET
 			| lhs EQUAL command
 			| lhs EQUAL command do compstmt END
+			| nfunction
 			| main'''
 	if(len(p)==2):
 		p[0]=p[1]
@@ -211,6 +217,7 @@ def p_expr(p):
 			| NOT expr
 			| command
 			| LOGICAL_NOT command
+			| nfunction
 			| args
 			| main'''
 	if(len(p)==2):
@@ -236,6 +243,37 @@ def p_command(p):
 	for i in range(1,len(p)):
 		p[0].append(p[i])
  	
+def p_nfunction(p):
+	'''nfunction : variable LPARENTHESIS fcall_args RPARENTHESIS
+				| primary DOT variable LPARENTHESIS fcall_args RPARENTHESIS
+				| primary DOT variable
+				| primary DOUBLECOLON variable'''
+	if(len(p)==5):
+		p[0]=Node()
+		if(not p[1].place.endswith("class")):
+			p[1].place=p[1].place.split("_")[0]
+		p[0].code += p[3].code
+		p[0].place = p[1].place
+		if(p[1].place.startswith("print")):
+			# print "yes found print"
+			p[0].code += ["print\n"]
+		else:
+			p[0].code += ["callvoid, ",p[1].place+"\n"]
+		p[0].type = "function"
+	elif(len(p)==4):
+		p[0]=Node()
+		if(not p[3].place.endswith("class")):
+			p[3].place=p[3].place.split("_")[0]+"_class"
+		p[0].place=p[1].place+"_"+p[3].place
+	elif(len(p)==7):
+		p[0]=Node()
+		if(not p[3].place.endswith("class")):
+			p[3].place=p[3].place.split("_")[0]+"_class"
+		p[0].code += p[5].code
+		p[0].code += ["callvoid, ",p[1].place+"\n"]
+		p[0].place = p[1].place+"_"+p[3].place
+		p[0].type = "function"
+
 def p_function(p):
 	'''function : variable LPARENTHESIS fcall_args RPARENTHESIS
 				| primary DOT variable LPARENTHESIS fcall_args RPARENTHESIS
@@ -243,7 +281,8 @@ def p_function(p):
 				| primary DOUBLECOLON variable'''
 	if(len(p)==5):
 		p[0]=Node()
-		p[1].place=p[1].place.split("_")[0]
+		if(not p[1].place.endswith("class")):
+			p[1].place=p[1].place.split("_")[0]
 		p[0].code += p[3].code
 		p[0].place = p[1].place
 		if(p[1].place.startswith("print")):
@@ -252,13 +291,16 @@ def p_function(p):
 		p[0].type = "function"
 	elif(len(p)==4):
 		p[0]=Node()
-		p[3].place=p[3].place.split("_")[0]
+		if(not p[3].place.endswith("class")):
+			p[3].place=p[3].place.split("_")[0]+"_class"
 		p[0].place=p[1].place+"_"+p[3].place
 	elif(len(p)==7):
 		p[0]=Node()
-		p[3].place=p[3].place.split("_")[0]
+		if(not p[3].place.endswith("class")):
+			p[3].place=p[3].place.split("_")[0]+"_class"
 		p[0].code += p[5].code
-		p[0].place = p[1].place+"_"+p[3].place
+		# p[0].place = p[1].place+"_"+p[3].place
+		p[0].place = p[3].place
 		p[0].type = "function"
 
 def p_arg(p):
@@ -333,16 +375,16 @@ def p_arg(p):
 				print allscopes[curr_scope].table
 				print "error. variable, "+ p[1].place +" value not assigned before"
 				sys.exit()
-			if(global_gettype(p[1].place)):
-				# print global_gettype(p[1].place),global_gettype(p[3].place)
-				if(global_gettype(p[1].place)!=global_gettype(p[3].place)):
-					print "type mismatch for ",p[1].place,p[3].place,global_gettype(p[1].place),"and1",global_gettype(p[3].place)
-					sys.exit()
-			else:
-				# print p[1].type,p[3].type 
-				if(p[1].type!=p[3].type):
-					print "type mismatch for ",p[1].place,p[3].place,p[1].type,"and2",p[3].type
-					sys.exit()
+			# if(global_gettype(p[1].place)):
+			# 	# print global_gettype(p[1].place),global_gettype(p[3].place)
+			# 	if(global_gettype(p[1].place)!=global_gettype(p[3].place)):
+			# 		print "type mismatch for ",p[1].place,p[3].place,global_gettype(p[1].place),"and1",global_gettype(p[3].place)
+			# 		sys.exit()
+			# else:
+			# 	# print p[1].type,p[3].type 
+			# 	if(p[1].type!=p[3].type):
+			# 		print "type mismatch for ",p[1].place,p[3].place,p[1].type,"and2",p[3].type
+			# 		sys.exit()
 			if(p[2] in ["<=","<",">=",">","==","!="]):
 				# #print "did the big stuff"
 				lab1 = newlabel()
@@ -358,8 +400,10 @@ def p_arg(p):
 		elif(p[2]=='='):
 			p[0]=Node()				
 			if(p[3].type=="class"):
-				p[3].place=p[3].place.split("_")[0]
+				if(not p[3].place.endswith("class")):
+					p[3].place=p[3].place.split("_")[0]
 				p[0].code=["newclass,",p[1].place,","+p[3].place+"\n"]
+				classinstances[p[1].place]=p[3].place
 				p[0].type="class"
 			elif(p[3].type=="array"):
 				p[1].type="array"
@@ -376,8 +420,9 @@ def p_arg(p):
 
 				try:
 					float(p[3].place)
-					if("_" in p[0]):
-						p[1].place=p[1].place.split("_")[0]+"_"+str(curr_scope)
+					if(not p[1].place.endswith("class")):
+						if("_" in p[0]):
+							p[1].place=p[1].place.split("_")[0]+"_"+str(curr_scope)
 					# print "success nigger"
 				except:
 					#print "checking",p[3].place
@@ -508,12 +553,17 @@ def p_efscope(p):
 def p_cstart(p):
 	'''cstart : '''
 	global class_m
+	global class_n
 	class_m=1
+	class_n=p[-1].place.split("_")[0]
+	classlist[class_n]=[]
 	# print "set class_m to 1"
 
 def p_endclass(p):
 	'''endclass : ENDCLASS'''
 	global class_m
+	global class_n
+	class_n=None
 	class_m=0
 	# print "set class_m to 0"
 
@@ -534,14 +584,14 @@ def p_primary(p):
 				 | CASE compstmt WHEN when_args then compstmt opt_when_args opt_elsestmt END
 				 | nscope FOR block_var IN expr do compstmt escope END
 				 | BEGIN compstmt END
-				 | CLASS cstart variable terminals compstmt endclass
+				 | CLASS variable cstart terminals compstmt endclass
 				 | DEF fname nfscope argdecl compstmt efscope END'''
 	global curr_scope
 	if(p[1]=="class"):
 		p[0]=Node()
 		p[0].type="class"
-		p[3].place=p[3].place.split("_")[0]
-		p[0].code=["class, "+p[3].place+"\n"]
+		p[2].place=p[2].place.split("_")[0]
+		p[0].code=["class, "+p[2].place+"\n"]
 		p[0].code+=p[5].code
 		p[0].code+=["endclass\n"]
 	elif(len(p)==2):
@@ -738,7 +788,20 @@ def p_lhs(p):
 			p[0].place=t+"_"+str(curr_scope)
 	elif(len(p)==4):
 		p[0]=Node()
-		p[3].place=p[3].place.split("_")[0]
+		try:
+			classinstances[p[1].place]
+			pass
+		except KeyError:
+			print "no such class exists.", p[1].place,"\naborting"
+			sys.exit()
+		
+		if(not p[3].place.endswith("class")):
+			p[3].place=p[3].place.split("_")[0]+"_class"
+		if p[3].place in classlist[classinstances[p[1].place]]:
+			pass
+		else:
+			print "no such class member exists.", p[3].place,"\naborting"
+			sys.exit()
 		p[0].place=p[1].place+"_"+p[3].place
 	# #print "check: lhs", p[0].code
 
@@ -878,7 +941,10 @@ def p_op_asgn(p):
 
 def p_fname(p):
 	'''fname : variable'''
-	p[1].place=p[1].place.split("_")[0]
+	if(not p[1].place.endswith("class")):
+		p[1].place=p[1].place.split("_")[0]
+	# else:
+	# 	p[1].place=class_n+"_"+p[1].place
 	p[0] = p[1]
 # def p_operation(p):
 # 	'''operation : variable'''
@@ -900,14 +966,23 @@ def p_variable(p):
 		p[0]=Node()
 		# print 'found var'
 		global class_m
+		global class_n
+		# print "class name",class_n
 		# print class_m
+		# if(p[-1]=="class"):
+			# classlist[class_n]=[]
+			# print "class started"
 		if(not class_m):
 			if(global_lookup(p[1])):
 				p[0].place=str(global_lookup(p[1]))
+				# print "rturn ",p[0].place
 			else:
 				p[0].place=p[1]+"_"+str(curr_scope)
+				# print "rturn ",p[0].place
 		else:
-			p[0].place=p[1]
+			p[0].place=p[1]+"_class"
+			if(class_n):
+				classlist[class_n].append(p[0].place)
 			# print "yuio",p[0].place
 		p[0].type="variable"
 		if(global_lookup(p[1])):

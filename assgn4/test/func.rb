@@ -1,5 +1,5 @@
-def foo()
-	i = 1
+def foo(x)
+	i = x + 5
 end
-
-foo()
+a = 3
+b = foo(a)

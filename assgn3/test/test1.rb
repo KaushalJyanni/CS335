@@ -1,1 +1,1 @@
-print 'Hello World!'
+a = a + 1

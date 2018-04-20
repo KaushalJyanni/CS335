@@ -105,7 +105,9 @@ class threeAddCode:
 			self.instype="classi"
 			self.target = instruction[2]
 			self.src1 = instruction[3]
-			
+
+		elif(instruction[1] == "endclass"):
+			self.instype="endclass"
 		else:
 			print "unknown instruction type,",instruction[1], "aborting"
 			exit()

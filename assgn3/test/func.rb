@@ -1,5 +1,8 @@
-def foo()
-	i = 1
+def foo(x)
+	i = x + 5
+    return i
 end
-
-foo()
+main
+a = 3
+b = foo(a)
+print(b)

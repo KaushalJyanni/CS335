@@ -36,7 +36,11 @@ def gencode(i,instruction,nextinfotable):
 		print "pushl\t%ebp"
 		print "movl\t%esp,%ebp"
 	elif(instruction.instype=="classd"):
-
+		pass
+	elif(instruction.instype=="classi"):
+		pass
+	elif(instruction.instype=="endclass"):
+		pass
 	elif(instruction.instype=='assignment'):
 		if(check_int(instruction.src1)):
 			if(addrdesc[instruction.target][0]):
