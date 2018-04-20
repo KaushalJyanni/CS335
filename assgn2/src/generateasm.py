@@ -35,6 +35,7 @@ def gencode(i,instruction,nextinfotable):
 		print "realmain:"
 		print "pushl\t%ebp"
 		print "movl\t%esp,%ebp"
+	elif(instruction.instype=="classd"):
 
 	elif(instruction.instype=='assignment'):
 		if(check_int(instruction.src1)):
@@ -209,10 +210,13 @@ def gencode(i,instruction,nextinfotable):
 
 	elif(instruction.instype == "push"):
 		# writeback()
-		if(addrdesc[instruction.src1][0]):
-			print "pushl\t%"+addrdesc[instruction.src1][0]
+		if(not check_int(instruction.src1)):
+			if(addrdesc[instruction.src1][0]):
+				print "pushl\t%"+addrdesc[instruction.src1][0]
+			else:
+				print "pushl\t"+instruction.src1
 		else:
-			print "pushl\t"+instruction.src1
+				print "pushl\t$"+instruction.src1
 	
 	elif(instruction.instype == 'retint'):
 		writeback()
