@@ -32,7 +32,8 @@ reserved = {
    'new' : 'NEW',
    'main' : 'MAIN',
    'endclass' : 'ENDCLASS',
-   'newclass' : 'NEWCLASS'
+   'newclass' : 'NEWCLASS',
+   'scan'   : 'SCAN'
 }
 
 arithmetic = [

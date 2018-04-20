@@ -200,9 +200,13 @@ def p_stmt(p):
 			| lhs EQUAL command
 			| lhs EQUAL command do compstmt END
 			| nfunction
+			| SCAN LPARENTHESIS variable RPARENTHESIS
 			| main'''
 	if(len(p)==2):
 		p[0]=p[1]
+	elif(p[1]=="scan"):
+		p[0]=Node()
+		p[0].code=["scan, "+p[3].place+"\n"]
 
 def p_main(p):
 	'''main : MAIN'''
@@ -218,9 +222,13 @@ def p_expr(p):
 			| command
 			| LOGICAL_NOT command
 			| nfunction
+			| SCAN LPARENTHESIS variable RPARENTHESIS
 			| args
 			| main'''
-	if(len(p)==2):
+	if(p[1]=="scan"):
+		p[0]=Node()
+		p[0].code=["scan, "+p[3].place+"\n"]
+	elif(len(p)==2):
 		p[0]=p[1]
 	elif(p[1]=="return"):
 		#print "did return"
@@ -257,6 +265,9 @@ def p_nfunction(p):
 		if(p[1].place.startswith("print")):
 			# print "yes found print"
 			p[0].code += ["print\n"]
+		# elif(p[1].place.startswith("scan")):
+		# 	# print "yes found print"
+		# 	p[0].code += ["scan\n"]
 		else:
 			p[0].code += ["callvoid, ",p[1].place+"\n"]
 		p[0].type = "function"
