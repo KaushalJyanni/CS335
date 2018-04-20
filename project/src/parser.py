@@ -127,7 +127,7 @@ def global_lookup(var):
 def global_gettype(var):
 	for sc in reversed(scope_stack):
 		for key in allscopes[sc].table.keys():
-			if key.startswith(str(var)+"_"):
+			if key.startswith(str(var)+"_") or key==var:
 				return allscopes[sc].table[key]["type"]
 	return None
 
@@ -375,16 +375,16 @@ def p_arg(p):
 				print allscopes[curr_scope].table
 				print "error. variable, "+ p[1].place +" value not assigned before"
 				sys.exit()
-			# if(global_gettype(p[1].place)):
-			# 	# print global_gettype(p[1].place),global_gettype(p[3].place)
-			# 	if(global_gettype(p[1].place)!=global_gettype(p[3].place)):
-			# 		print "type mismatch for ",p[1].place,p[3].place,global_gettype(p[1].place),"and1",global_gettype(p[3].place)
-			# 		sys.exit()
-			# else:
-			# 	# print p[1].type,p[3].type 
-			# 	if(p[1].type!=p[3].type):
-			# 		print "type mismatch for ",p[1].place,p[3].place,p[1].type,"and2",p[3].type
-			# 		sys.exit()
+			if(global_gettype(p[1].place)):
+				# print global_gettype(p[1].place),global_gettype(p[3].place)
+				if(global_gettype(p[1].place)=="class" or global_gettype(p[3].place)=="class"):
+					print "type mismatch for ",p[1].place,p[3].place#,global_gettype(p[1].place),"and1",global_gettype(p[3].place)
+					sys.exit()
+			else:
+				# print p[1].type,p[3].type 
+				if(p[1].type=="class" or p[3].type=="class"):
+					print "type mismatch for ",p[1].place,p[3].place#,p[1].type,"and2",p[3].type
+					sys.exit()
 			if(p[2] in ["<=","<",">=",">","==","!="]):
 				# #print "did the big stuff"
 				lab1 = newlabel()
@@ -395,7 +395,7 @@ def p_arg(p):
 				p[0].code += ["label, "+lab1+"\n"]
 				p[0].code += ["=, "+p[0].place+", 1 \n"]
 				p[0].code += ["label, "+lab2+"\n"]
-			else:	
+			else:
 				p[0].code += [p[2]+", "+p[0].place+", "+p[1].place+", "+p[3].place+" \n"]
 		elif(p[2]=='='):
 			p[0]=Node()				
@@ -421,9 +421,10 @@ def p_arg(p):
 				try:
 					float(p[3].place)
 					if(not p[1].place.endswith("class")):
-						if("_" in p[0]):
+						# print "checkerssss",p[1].place
+						if("_" in p[1].place):
 							p[1].place=p[1].place.split("_")[0]+"_"+str(curr_scope)
-					# print "success nigger"
+							# print "success nigger"
 				except:
 					#print "checking",p[3].place
 					if(p[3].type == "variable" and (not global_lookup(p[3].place))):
@@ -591,6 +592,7 @@ def p_primary(p):
 		p[0]=Node()
 		p[0].type="class"
 		p[2].place=p[2].place.split("_")[0]
+		allscopes[curr_scope].insert(p[2].place,'class')
 		p[0].code=["class, "+p[2].place+"\n"]
 		p[0].code+=p[5].code
 		p[0].code+=["endclass\n"]
@@ -974,9 +976,15 @@ def p_variable(p):
 			# print "class started"
 		if(not class_m):
 			if(global_lookup(p[1])):
+				if(global_gettype(p[1])=="class" and p[-1]!="newclass"):
+					print "variable name, "+p[1]+" cant be same as class name. aborting"
+					sys.exit()
 				p[0].place=str(global_lookup(p[1]))
 				# print "rturn ",p[0].place
 			else:
+				if(global_gettype(p[1])=="class" and p[-1]!="newclass"):
+					print "variable name, "+p[1]+" cant be same as class name. aborting"
+					sys.exit()
 				p[0].place=p[1]+"_"+str(curr_scope)
 				# print "rturn ",p[0].place
 		else:
