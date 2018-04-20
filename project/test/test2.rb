@@ -5,6 +5,7 @@ items = 10
 
 for i in (1..4)
     i = i + 1
+    print(i)
 end
 
 
@@ -14,5 +15,6 @@ for i in (1..4)
     b = b + 0
 end
 
+print(a)
 
 

@@ -1,3 +1,3 @@
+main
 b = 1
-c = 'asd'
-b = 2 + c
+c = 1

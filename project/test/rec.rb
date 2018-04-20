@@ -1,12 +1,12 @@
-def foo(a)
-    print(a)
-    a= a + 1
-    if a < 10
-        foo(a) 
+def foo(i)
+    print(i)
+    i = i + 1
+    if i < 10
+         x = foo(i)
     end
     return
 end
-main
-c=5
-foo(c)
 
+main
+a = 1
+y = foo(a)

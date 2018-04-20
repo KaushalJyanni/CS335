@@ -5,6 +5,6 @@ def foo(x,y)
 end
 main
 a = 3
-c= 2
+c = 2
 b = foo(a,c)
 print(b)

@@ -1,3 +1,4 @@
+main
 i = 0
 j = 0
 k = 0
@@ -11,4 +12,4 @@ for i in (0..9)
 	end
 end
 
-print("res = ", res)
+print(res)

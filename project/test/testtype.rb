@@ -1,2 +1,3 @@
+main
 c = 2
-c = "asd"
+c = 'asd'
