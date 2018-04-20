@@ -140,10 +140,10 @@ def printfinal(node):
 	# print
 	# global total_scopes
 	# print "total",total_scopes+1
-	for curr_scope in range(0,total_scopes+1):
-		print curr_scope
-		print allscopes[curr_scope].table
-		print
+	# for curr_scope in range(0,total_scopes+1):
+	# 	print curr_scope
+	# 	print allscopes[curr_scope].table
+	# 	print
 	# print classlist
 	# print classinstances
 
@@ -421,9 +421,10 @@ def p_arg(p):
 				try:
 					float(p[3].place)
 					if(not p[1].place.endswith("class")):
-						if("_" in p[0]):
+						# print "checkerssss",p[1].place
+						if("_" in p[1].place):
 							p[1].place=p[1].place.split("_")[0]+"_"+str(curr_scope)
-					# print "success nigger"
+							# print "success nigger"
 				except:
 					#print "checking",p[3].place
 					if(p[3].type == "variable" and (not global_lookup(p[3].place))):
