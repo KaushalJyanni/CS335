@@ -675,7 +675,7 @@ def p_primary(p):
 		#print p[2].place
 		p[0].code+=["ifgoto, neq, "+switchtemp+", "+p[4].place+", s"+str(slabel)+"\n"]
 		p[0].code+=p[6].code
-		# p[0].code+="goto, safter \n"
+		p[0].code+="goto, safter \n"
 		p[0].code+=["label, s"+str(slabel)+"\n"]
 		p[0].code+=p[7].code
 		p[0].code+=["label, safter\n"]
@@ -697,9 +697,10 @@ def p_opt_when_args(p):
 		# else:
 		# 	p[0].code+=["ifgoto, neq, "+switchtemp+", "+p[2].place+", s0"+"\n"]
 		p[0].code+=p[4].code
-		p[0].code+=["label, s"+str(slabel)+"\n"]
 		p[0].code+="goto, safter\n"
+		p[0].code+=["label, s"+str(slabel)+"\n"]
 		p[0].code+=p[5].code
+	# print "my code\n\n\n", p[0].code 
 	# else:
 	# 	slabel=0
 
