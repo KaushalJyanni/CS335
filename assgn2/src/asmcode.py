@@ -97,6 +97,15 @@ class threeAddCode:
 		elif(instruction[1]== "MAIN"):
 			self.instype="main"
 		
+		elif(instruction[1] == "class"):
+			self.instype="classd"
+			self.target = instruction[2]
+
+		elif(instruction[1] == "newclass"):
+			self.instype="classi"
+			self.target = instruction[2]
+			self.src1 = instruction[3]
+			
 		else:
 			print "unknown instruction type,",instruction[1], "aborting"
 			exit()
