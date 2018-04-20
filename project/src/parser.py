@@ -309,14 +309,14 @@ def p_arg(p):
 			#print "latest check,",p[1],p[1].code,p[1].type,p[1].place
 			if(p[1].type):
 				if(global_gettype(p[1].place)):
-					print p[1].place,"check"
+					# print p[1].place,"check"
 					temp = newtemp(allscopes[curr_scope], global_gettype(p[1].place))
 				else:
-					print p[1].place,"check"
+					# print p[1].place,"check"
 					temp = newtemp(allscopes[curr_scope], p[1].type)
 				# print "my type is",temp,p[1].type
 			else:
-				print p[1].place,"check"
+				# print p[1].place,"check"
 				temp = newtemp(allscopes[curr_scope], global_gettype(p[1].place))	
 			# #print "check arg p1 ",p[1].code
 			# #print "check arg p3 ",p[3].code	
@@ -333,16 +333,16 @@ def p_arg(p):
 				print allscopes[curr_scope].table
 				print "error. variable, "+ p[1].place +" value not assigned before"
 				sys.exit()
-			# if(global_gettype(p[1].place)):
-			# 	# print global_gettype(p[1].place),global_gettype(p[3].place)
-			# 	if(global_gettype(p[1].place)!=global_gettype(p[3].place)):
-			# 		print "type mismatch for ",p[1].place,p[3].place,global_gettype(p[1].place),"and1",global_gettype(p[3].place)
-			# 		sys.exit()
-			# else:
-			# 	# print p[1].type,p[3].type 
-			# 	if(p[1].type!=p[3].type):
-			# 		print "type mismatch for ",p[1].place,p[3].place,p[1].type,"and2",p[3].type
-			# 		sys.exit()
+			if(global_gettype(p[1].place)):
+				# print global_gettype(p[1].place),global_gettype(p[3].place)
+				if(global_gettype(p[1].place)!=global_gettype(p[3].place)):
+					print "type mismatch for ",p[1].place,p[3].place,global_gettype(p[1].place),"and1",global_gettype(p[3].place)
+					sys.exit()
+			else:
+				# print p[1].type,p[3].type 
+				if(p[1].type!=p[3].type):
+					print "type mismatch for ",p[1].place,p[3].place,p[1].type,"and2",p[3].type
+					sys.exit()
 			if(p[2] in ["<=","<",">=",">","==","!="]):
 				# #print "did the big stuff"
 				lab1 = newlabel()
